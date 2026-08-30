@@ -1,55 +1,62 @@
 # 🇬🇧 English Learning Platform (AI-Powered)
 
-Современная интерактивная веб-платформа для изучения английского языка с просмотром фильмов с умными субтитрами, билингвальной читалкой книг, лентой коротких видео (Reels) и глубоким лингвистическим AI-анализом слов и конструкций.
+[![Python](https://img.shields.io/badge/Python-3.12%2B-blue.svg?style=flat&logo=python)](https://www.python.org/)
+[![Django](https://img.shields.io/badge/Django-5.x-green.svg?style=flat&logo=django)](https://www.djangoproject.com/)
+[![Gemini](https://img.shields.io/badge/AI-Gemini%203.7%20Flash-orange.svg?style=flat&logo=google)](https://ai.google.dev/)
+[![PostgreSQL](https://img.shields.io/badge/Database-PostgreSQL-blue.svg?style=flat&logo=postgresql)](https://www.postgresql.org/)
+[![Redis](https://img.shields.io/badge/Cache-Redis-red.svg?style=flat&logo=redis)](https://redis.io/)
+[![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+
+An advanced, interactive web platform for English learners featuring dual-subtitle video playback, a bilingual reader, TikTok-style short clips (Reels), and deep AI-driven linguistic analysis of words and grammatical constructions.
 
 ---
 
-## ✨ Ключевые возможности
+## ✨ Key Features
 
-### 🎬 Кино (Interactive Cinema)
-- Полноэкранный видеоплеер с **двойными синхронизированными субтитрами** (EN + RU).
-- Интерактивный клик по любому слову в субтитрах → мгновенный всплывающий разбор с учётом контекста фильма.
-- Добавление незнакомых слов в личную колоду для интервального повторения в один клик.
+### 🎬 Cinema (Interactive Dual-Subtitle Player)
+- Fullscreen video player with **dual synchronized subtitles** (EN + RU).
+- Tap or click any English word in the subtitles for an instant contextual breakdown modal without interrupting video playback.
+- One-click addition of unfamiliar words to personal decks for spaced repetition.
 
-### 📱 Скролл (Shorts / Reels)
-- Вертикальная лента коротких видео (формат TikTok/Instagram Reels).
-- Синхронные субтитры с подсветкой сложных слов.
-- Быстрое скрытие/показ русского перевода (кнопка `А→Я`).
+### 📱 Scroll (Reels / Shorts Feed)
+- Vertical video feed optimized for short learning clips (TikTok/Instagram Reels format).
+- Synchronized dual subtitles with auto-highlighting of complex vocabulary.
+- Quick toggle button (`A→Я`) to show or hide Russian translations.
 
-### 📖 Словарь и Лингвистический AI-движок
-- **Глубокий разбор слов:** все значения, грамматический контекст, транскрипция (IPA), уровень CEFR (A1–C2) и живые примеры к каждому значению.
-- **Разбор конструкций и идиом:** схемы (`brush + что + off`), слоты подстановки, вариации порядка слов и практические сценарии использования.
-- **Мгновенный автокомплит:** локальный индекс на 5 000 базовых слов (0 мс отклик) + исправление опечаток.
-- **Голосовой ввод:** поиск слов через нативный Web Speech API.
+### 📖 Dictionary & AI Linguistic Engine
+- **Deep Word Analysis:** All distinct meanings, grammatical context, IPA phonetics, CEFR difficulty levels (A1–C2), and conversational examples for each definition.
+- **Idiom & Construction Breakdown:** Structural patterns (e.g., `brush + sth + off`), placeholder slots, word order variations, and real-world usage scenarios.
+- **Zero-Latency Autocomplete:** Client-side 5,000-word core index (0 ms response time) with typo correction.
+- **Voice Search:** Integrated microphone input using native browser Web Speech API.
 
-### 📚 Книги (Bilingual Reader)
-- Классическая литература в оригинале, разбитая по главам.
-- Параллельный перевод (подстрочник) к каждому параграфу.
-- Пакетный фоновый перевод книг через Celery и Gemini AI.
+### 📚 Books (Bilingual Reader)
+- Original classic literature organized by chapters.
+- Parallel line-by-line Russian translations for every paragraph.
+- Asynchronous batch translation of uploaded EPUB books via Celery workers and Gemini AI.
 
-### 📋 Таблицы и Грамматика
-- Интерактивные грамматические таблицы с озвучкой ячеек.
-- Встроенные практические упражнения с подсчётом баллов и тренажёром.
+### 📋 Grammar Lab (Tables & Exercises)
+- Interactive grammar tables with cell audio pronunciation.
+- Embedded exercises with scoring, instant validation, and interactive review trainers.
 
-### 💪 Качалка (Интервальное повторение и Геймификация)
-- Алгоритм интервальных повторений **SM-2** (SuperMemo).
-- **Маскот-питомец:** 30 уровней прокачки (от «Щенка» до «Легенды») за заработанный опыт (XP).
-- Заморозки стрика (Streak Freeze) и график активности за 5 недель.
+### 💪 Workout / Kachalka (Spaced Repetition & Gamification)
+- **SM-2 (SuperMemo)** spaced repetition algorithm for optimal vocabulary retention.
+- **Pet Companion Gamification:** 30 levels of progression (from "Puppy" to "Legend") powered by earned study XP.
+- Activity heatmaps (5-week view), custom decks, and Duolingo-style **Streak Freezes**.
 
 ---
 
-## 🛠 Технологический стек
+## 🛠 Tech Stack
 
-| Слой | Технологии |
+| Layer | Technologies |
 |---|---|
 | **Backend** | Python 3.12+, Django 5.x |
 | **AI Engine** | Google Gemini 3.7 Flash, Pydantic v2 (Strict Structured Outputs) |
-| **База данных** | PostgreSQL (JSONField, Trigram fuzzy search) |
-| **Кэш и Очереди** | Redis, Celery (фоновый перевод книг и обогащение словаря) |
-| **Фронтенд** | Django Templates, Vanilla JavaScript, CSS3 (Modern Glassmorphism & Dark Theme) |
-| **Обработка субтитров** | `pysrt`, `webvtt-py` |
+| **Database** | PostgreSQL (JSONField, Trigram fuzzy search) |
+| **Cache & Queue** | Redis, Celery (background book translation & dictionary enrichment) |
+| **Frontend** | Django Templates, Vanilla JavaScript, CSS3 (Modern Glassmorphism & Dark Mode) |
+| **Subtitle Parsing** | `pysrt`, `webvtt-py` |
 
 ---
 
-## 📁 Структура проекта
+## 📁 Project Architecture
 
