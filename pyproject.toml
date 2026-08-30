@@ -1,0 +1,15 @@
+[project]
+name = "english-tutor"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "aiogram>=3.30.0",
+    "django>=6.1",
+    "dotenv>=0.9.9",
+    "google>=3.0.0",
+    "google-genai>=2.19.0",
+    "protobuf>=7.36.0",
+    "pydantic>=2.10.0",
+]
