@@ -1,0 +1,197 @@
+{% extends "base.html" %}
+
+{% block title %}Словарь — English Platform{% endblock %}
+{% block page_title %}📖 Словарь{% endblock %}
+
+{% block content %}
+<div class="dictionary">
+    <form class="dictionary__search" method="get" action="">
+        <input
+            class="dictionary__input"
+            type="text"
+            name="q"
+            value=""
+            placeholder="Введите слово или фразу..."
+            autocomplete="off"
+            autofocus
+        >
+        <button class="dictionary__btn" type="submit">Найти</button>
+    </form>
+
+    {% if result %}
+    <div class="dictionary__result">
+        <div class="card dictionary__header">
+            <h2 class="dictionary__word">{{ result.english }}</h2>
+            {% if result.transcription %}
+            <span class="dictionary__transcription font-mono">{{ result.transcription }}</span>
+            {% endif %}
+            {% if result.cefr %}
+            <span class="badge badge--cefr">{{ result.cefr }}</span>
+            {% endif %}
+            {% if result.part_of_speech %}
+            <span class="badge">{{ result.part_of_speech }}</span>
+            {% endif %}
+            {% if result.english_definition %}
+            <p class="dictionary__definition">{{ result.english_definition }}</p>
+            {% endif %}
+        </div>
+
+        {% if result.meanings %}
+        <div class="card">
+            <h3 class="card__title">Значения</h3>
+            {% for meaning in result.meanings %}
+            <div class="meaning">
+                <p class="meaning__ru">{{ meaning.ru }}</p>
+                {% if meaning.context %}
+                <span class="meaning__context">{{ meaning.context }}</span>
+                {% endif %}
+                <ul class="meaning__examples">
+                    {% for ex in meaning.examples %}
+                    <li>
+                        <span class="example__en">{{ ex.en }}</span>
+                        <span class="example__ru">{{ ex.ru }}</span>
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        {% if result.uses %}
+        <div class="card">
+            <h3 class="card__title">Применения</h3>
+            {% if result.pattern %}
+            <p class="construction__pattern font-mono">{{ result.pattern }}</p>
+            {% endif %}
+            {% for use in result.uses %}
+            <div class="meaning">
+                <p class="meaning__ru">{{ use.ru }}</p>
+                {% if use.context %}
+                <span class="meaning__context">{{ use.context }}</span>
+                {% endif %}
+                <ul class="meaning__examples">
+                    {% for ex in use.examples %}
+                    <li>
+                        <span class="example__en">{{ ex.en }}</span>
+                        <span class="example__ru">{{ ex.ru }}</span>
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        {% if result.slots %}
+        <div class="card">
+            <h3 class="card__title">Слоты конструкции</h3>
+            {% for slot in result.slots %}
+            <div class="slot">
+                <strong class="slot__name">{{ slot.name }}</strong>
+                <p class="slot__desc">{{ slot.description }}</p>
+                <div class="tags">
+                    {% for ex in slot.examples %}
+                    <span class="tag">{{ ex }}</span>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        {% if result.collocations %}
+        <div class="card">
+            <h3 class="card__title">Словосочетания</h3>
+            <div class="tags">
+                {% for col in result.collocations %}
+                <span class="tag">{{ col }}</span>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        {% if result.synonyms_by_level %}
+        <div class="card">
+            <h3 class="card__title">Синонимы</h3>
+            {% for group in result.synonyms_by_level %}
+            <div class="synonym-group">
+                <span class="badge badge--cefr">{{ group.level }}</span>
+                <div class="tags">
+                    {% for syn in group.synonyms %}
+                    <span class="tag">{{ syn }}</span>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        {% if result.word_family %}
+        <div class="card">
+            <h3 class="card__title">Семейство слов</h3>
+            <div class="tags">
+                {% for w in result.word_family %}
+                <span class="tag">{{ w }}</span>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        {% if result.variations %}
+        <div class="card">
+            <h3 class="card__title">Вариации</h3>
+            {% for var in result.variations %}
+            <div class="variation">
+                <code class="variation__pattern">{{ var.pattern }}</code>
+                <span class="variation__note">{{ var.note }}</span>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+    </div>
+    {% elif query %}
+    <div class="card dictionary__empty">
+        <p>Ничего не найдено по запросу «{{ query }}».</p>
+    </div>
+    {% endif %}
+</div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const searchForm = document.querySelector(".dictionary__search");
+        const searchInput = document.querySelector(".dictionary__input");
+        const searchBtn = document.querySelector(".dictionary__btn");
+
+        if (!searchForm || !searchInput || !searchBtn) {
+            return;
+        }
+
+        let isSubmitting = false;
+
+        searchForm.addEventListener("submit", function (event) {
+            const queryValue = searchInput.value.trim();
+            if (!queryValue || isSubmitting) {
+                event.preventDefault();
+                return;
+            }
+
+            isSubmitting = true;
+            searchBtn.disabled = true;
+            searchBtn.classList.add("dictionary__btn--loading");
+            searchBtn.textContent = "Поиск...";
+
+            setTimeout(function () {
+                searchInput.value = "";
+            }, 0);
+        });
+
+        window.addEventListener("pageshow", function () {
+            isSubmitting = false;
+            searchBtn.disabled = false;
+            searchBtn.classList.remove("dictionary__btn--loading");
+            searchBtn.textContent = "Найти";
+        });
+    });
+</script>
+{% endblock %}

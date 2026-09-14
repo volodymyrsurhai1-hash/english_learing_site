@@ -7,7 +7,7 @@ from django.conf import settings
 
 logger = logging.getLogger(__name__)
 
-MODEL = "gemini-3.5-flash"
+MODEL = "gemini-3.8-flash"
 
 
 def get_ai_client():
@@ -60,7 +60,7 @@ class LinguisticAnalysis(BaseModel):
     frequency: Optional[str] = Field(default=None, description="Частотность, например: '8/10'")
     style: Optional[str] = Field(default=None, description="Стиль: Нейтральный / Разговорный / Формальный / Идиоматический")
 
-    # Поля для слова
+
     transcription: Optional[str] = Field(default=None, description="Транскрипция, например: '/rʌn/'")
     part_of_speech: Optional[str] = Field(default=None, description="Часть речи (существительное, глагол и т.д.)")
     collocations: list[str] = Field(default_factory=list, description="Популярные словосочетания в речи")
@@ -69,7 +69,7 @@ class LinguisticAnalysis(BaseModel):
     synonyms_by_level: list[SynonymGroup] = Field(default_factory=list, description="Синонимы, сгруппированные по уровням сложности (CEFR)")
     word_family: list[str] = Field(default_factory=list, description="Семейство слов (однокоренные слова от базового до производных), например: ['lovely', 'lover', 'loving', 'loved']")
 
-    # Поля для конструкции
+
     pattern: Optional[str] = Field(default=None, description="Схема конструкции, например: 'brush + что + off'")
     what_it_means: Optional[str] = Field(default=None, description="Краткая суть/определение конструкции")
     slots: list[ConstructionSlot] = Field(default_factory=list, description="Слоты конструкции (что подставлять)")

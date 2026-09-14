@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+
+{% block title %}Регистрация — English Platform{% endblock %}
+{% block page_title %}👤 Регистрация{% endblock %}
+
+{% block content %}
+<div class="auth-container">
+    <div class="card auth-card">
+        <h2 class="auth-card__title">Создать аккаунт</h2>
+
+        {% if form.non_field_errors %}
+        <div class="auth-card__errors">
+            {% for error in form.non_field_errors %}
+            <p class="auth-card__error">{{ error }}</p>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <form method="post" action="{% url 'register' %}" class="auth-form" novalidate>
+            {% csrf_token %}
+
+            {% for field in form %}
+            <div class="auth-form__group">
+                <label class="auth-form__label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+                {{ field }}
+                {% if field.help_text %}
+                <span class="auth-form__help">{{ field.help_text|safe }}</span>
+                {% endif %}
+                {% if field.errors %}
+                <div class="auth-form__field-errors">
+                    {% for error in field.errors %}
+                    <span class="auth-form__error">{{ error }}</span>
+                    {% endfor %}
+                </div>
+                {% endif %}
+            </div>
+            {% endfor %}
+
+            <button type="submit" class="btn btn--primary auth-form__submit">Зарегистрироваться</button>
+        </form>
+
+        <div class="auth-card__footer">
+            <span>Уже есть аккаунт?</span>
+            <a href="{% url 'login' %}" class="auth-card__link">Войти</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -11,5 +11,11 @@ dependencies = [
     "google>=3.0.0",
     "google-genai>=2.19.0",
     "protobuf>=7.36.0",
+    "psycopg2-binary>=2.9.13",
     "pydantic>=2.10.0",
+]
+
+[dependency-groups]
+dev = [
+    "django-stubs>=6.1.0",
 ]

@@ -1,0 +1,73 @@
+{% load static %}
+{% load menu_tags %}
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}English Platform{% endblock %}</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+    {% block extra_css %}{% endblock %}
+</head>
+<body class="body">
+    <div class="layout">
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar__logo">
+                <span class="sidebar__logo-icon">🇬🇧</span>
+                <span class="sidebar__logo-text">English Platform</span>
+            </div>
+
+            {% get_menu as menu %}
+            <ul class="sidebar__menu">
+                {% for item in menu %}
+                <li class="sidebar__item{% if item.active %} sidebar__item--active{% endif %}">
+                    <a href="{{ item.url }}"
+                       class="sidebar__link{% if item.disabled %} sidebar__link--disabled{% endif %}">
+                        <span class="sidebar__icon">{{ item.icon }}</span>
+                        <span class="sidebar__text">{{ item.title }}</span>
+                    </a>
+                </li>
+                {% endfor %}
+            </ul>
+        </aside>
+
+        <main class="main">
+            <header class="topbar">
+                <div class="topbar__left">
+                    <button class="topbar__burger" id="burger-toggle" aria-label="Toggle menu">☰</button>
+                    <h1 class="topbar__title">{% block page_title %}{% endblock %}</h1>
+                </div>
+                <div class="topbar__actions">
+                    {% block topbar_actions %}{% endblock %}
+                    {% if user.is_authenticated %}
+                    <div class="topbar__user">
+                        <span class="topbar__user-email">{{ user.email }}</span>
+                        <form method="post" action="{% url 'logout' %}" class="topbar__logout-form">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn--outline-sm">Выйти</button>
+                        </form>
+                    </div>
+                    {% else %}
+                    <div class="topbar__auth">
+                        <a href="{% url 'login' %}" class="btn btn--outline-sm">Войти</a>
+                        <a href="{% url 'register' %}" class="btn btn--primary-sm">Регистрация</a>
+                    </div>
+                    {% endif %}
+                </div>
+            </header>
+
+            <section class="content">
+                {% block content %}{% endblock %}
+            </section>
+        </main>
+    </div>
+
+    <script src="{% static 'js/main.js' %}"></script>
+    {% block extra_js %}{% endblock %}
+</body>
+</html>
