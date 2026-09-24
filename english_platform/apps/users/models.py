@@ -1,4 +1,4 @@
-from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin
+from django.contrib.auth.models import AbstractBaseUser, AbstractUser, PermissionsMixin
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 
@@ -14,7 +14,9 @@ class User(AbstractBaseUser, PermissionsMixin):
     objects = UserManager()
 
     USERNAME_FIELD = "email"
-    REQUIRED_FIELDS = []  # поля, которые спросит createsuperuser кроме USERNAME_FIELD и пароля
+    REQUIRED_FIELDS = (
+        []
+    )  # поля, которые спросит createsuperuser кроме USERNAME_FIELD и пароля
 
     def __str__(self):
         return self.email

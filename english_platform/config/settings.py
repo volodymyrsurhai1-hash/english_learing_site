@@ -11,6 +11,7 @@ load_dotenv(dotenv_path)
 SECRET_KEY = os.environ.get("SECRET_KEY")
 
 GEMINI_API_KEY = os.environ.get("GEMINI_API")
+GEMINI_MODEL: str = os.environ.get("GEMINI_MODEL", "gemini-3.6-flash")
 
 DEBUG = True
 
@@ -27,7 +28,26 @@ INSTALLED_APPS = [
     "apps.core.apps.CoreConfig",
     "apps.dictionary.apps.DictionaryConfig",
     "apps.users.apps.UsersConfig",
+    "apps.cards.apps.CardsConfig",
+    "apps.grammar.apps.GrammarConfig",
+    "apps.films.apps.FilmsConfig",
+    'django_otp',
+    'django_otp.plugins.otp_email',
+    'django_otp.plugins.otp_totp',
+    'django_otp.plugins.otp_static',
+    'two_factor',
+    'two_factor.plugins.email',
 ]
+
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = os.environ.get('EMAIL_HOST')
+EMAIL_PORT = int(os.environ.get('EMAIL_PORT', 587))
+EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER')
+EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD')
+EMAIL_USE_TLS = os.environ.get('EMAIL_USE_TLS', 'True') == 'True'
+DEFAULT_FROM_EMAIL = os.environ.get('DEFAULT_FROM_EMAIL')
+OTP_EMAIL_SENDER = os.environ.get('DEFAULT_FROM_EMAIL')
+
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
@@ -37,6 +57,8 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    'django_otp.middleware.OTPMiddleware',
+    'apps.core.middleware.EnforceOTPMiddleware',
 ]
 
 ROOT_URLCONF = "config.urls"
@@ -73,7 +95,7 @@ DATABASES = {
 AUTH_USER_MODEL = "users.User"
 LOGIN_REDIRECT_URL = "dictionary:search"
 LOGOUT_REDIRECT_URL = "dictionary:search"
-LOGIN_URL = "login"
+LOGIN_URL = 'two_factor:login'
 
 AUTH_PASSWORD_VALIDATORS = [
     {
@@ -105,5 +127,8 @@ STATIC_URL = "static/"
 STATICFILES_DIRS: list[Path] = [
     BASE_DIR / "static",
 ]
+
+MEDIA_URL = "/media/"
+MEDIA_ROOT = BASE_DIR / "media"
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"

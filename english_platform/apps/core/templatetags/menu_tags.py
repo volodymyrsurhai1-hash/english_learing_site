@@ -3,15 +3,19 @@ from typing import Any
 from django import template
 from django.urls import NoReverseMatch, reverse
 
+from django import template
+from django.utils.safestring import mark_safe
+
+import markdown
+
 register = template.Library()
 
 MENU_ITEMS: list[dict[str, str]] = [
     {"title": "Словарь", "url_name": "dictionary:search", "icon": "📖"},
-    {"title": "Таблицы", "url_name": "", "icon": "📋"},
-    {"title": "Книги", "url_name": "", "icon": "📚"},
-    {"title": "Кино", "url_name": "", "icon": "🎬"},
-    {"title": "Скролл", "url_name": "", "icon": "📱"},
-    {"title": "Кабинет", "url_name": "", "icon": "👤"},
+    {"title": "Грамматика", "url_name": "grammar:list", "icon": "📚"},
+    {"title": "Карточки", "url_name": "cards:index", "icon": "🃏"},
+    {"title": "Кино", "url_name": "films:list", "icon": "🎬"},
+    {"title": "Профиль", "url_name": "profile", "icon": "👤"},
 ]
 
 
@@ -42,3 +46,8 @@ def get_menu(context: dict[str, Any]) -> list[dict[str, Any]]:
         resolved.append(entry)
 
     return resolved
+
+
+@register.filter(name="markdown")
+def markdown_format(text):
+    return mark_safe(markdown.markdown(text))

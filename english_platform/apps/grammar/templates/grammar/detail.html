@@ -1,0 +1,298 @@
+{% extends "base.html" %}
+
+{% block title %}{{ topic.title }} — Grammar — English Platform{% endblock %}
+{% block page_title %}{{ topic.title }}{% endblock %}
+
+{% block topbar_actions %}
+<a href="{% url 'grammar:list' %}" class="topbar-back">← Все темы</a>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.topbar-back {
+    font-size: 13px;
+    color: var(--text-secondary);
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border-muted);
+    transition: border-color 0.15s, color 0.15s;
+}
+.topbar-back:hover { border-color: var(--border-default); color: var(--text-primary); }
+
+.grammar-meta {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 28px;
+}
+.grammar-meta__badge {
+    padding: 5px 12px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 600;
+    background: rgba(88,166,255,0.12);
+    color: var(--accent-blue);
+}
+
+.grammar-content {
+    max-width: 860px;
+    line-height: 1.8;
+    color: var(--text-primary);
+    font-size: 15px;
+}
+
+.g-section { margin-bottom: 40px; }
+.g-section h2 {
+    font-size: 22px;
+    font-weight: 700;
+    margin: 0 0 16px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--border-default);
+    color: var(--text-primary);
+}
+.g-essence {
+    font-size: 16px;
+    color: var(--text-secondary);
+    background: var(--bg-secondary);
+    padding: 16px 20px;
+    border-radius: var(--radius-md);
+    border-left: 3px solid var(--accent-blue);
+    margin-bottom: 40px;
+}
+
+.g-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 16px 0 24px;
+    font-size: 14px;
+    background: var(--bg-secondary);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+}
+.g-table th {
+    background: rgba(22,27,34,0.8);
+    color: var(--text-secondary);
+    font-weight: 600;
+    padding: 12px 16px;
+    text-align: left;
+    border-bottom: 1px solid var(--border-default);
+}
+.g-table td {
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border-muted);
+    vertical-align: top;
+}
+.g-table tr:last-child td { border-bottom: none; }
+
+.g-note {
+    font-size: 13px;
+    color: var(--text-muted);
+    background: rgba(210,153,34,0.1);
+    border-left: 3px solid var(--accent-yellow);
+    padding: 10px 14px;
+    border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+    margin-bottom: 24px;
+}
+
+.g-scenario {
+    margin-bottom: 30px;
+    background: var(--bg-card);
+    border: 1px solid var(--border-muted);
+    border-radius: var(--radius-md);
+    padding: 20px;
+}
+.g-scenario h3 {
+    font-size: 17px;
+    font-weight: 600;
+    color: var(--accent-blue);
+    margin: 0 0 8px;
+}
+.g-scenario p {
+    color: var(--text-secondary);
+    margin: 0 0 16px;
+    font-size: 14px;
+}
+.g-example {
+    margin-bottom: 12px;
+    padding-left: 16px;
+    border-left: 2px solid var(--border-default);
+}
+.g-example:last-child { margin-bottom: 0; }
+.g-example .en { font-weight: 600; color: var(--text-primary); display: block; }
+.g-example .ru { font-size: 14px; color: var(--text-muted); display: block; margin-top: 2px; }
+.g-example .note { font-size: 13px; color: var(--accent-yellow); font-style: italic; margin-left: 6px; }
+
+.g-markers {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+.g-marker {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-default);
+    padding: 4px 10px;
+    border-radius: 4px;
+    font-family: var(--font-mono);
+    font-size: 13px;
+    color: var(--accent-green);
+}
+
+.g-exercise {
+    margin-bottom: 24px;
+    background: rgba(88,166,255,0.05);
+    border: 1px solid rgba(88,166,255,0.2);
+    border-radius: var(--radius-md);
+    padding: 20px;
+}
+.g-exercise h3 { margin: 0 0 6px; font-size: 16px; color: var(--text-primary); }
+.g-exercise p { margin: 0 0 16px; font-size: 14px; color: var(--text-secondary); }
+.g-ex-item {
+    margin-bottom: 12px;
+    font-size: 15px;
+}
+.g-ex-item:last-child { margin-bottom: 0; }
+.g-ex-answer {
+    display: inline-block;
+    margin-left: 10px;
+    font-size: 13px;
+    color: transparent;
+    background: var(--bg-secondary);
+    padding: 2px 8px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: color 0.2s, background 0.2s;
+    user-select: none;
+}
+.g-ex-answer:hover {
+    color: var(--accent-green);
+    background: rgba(63,185,80,0.15);
+}
+.g-ex-answer::before {
+    content: "Показать ответ";
+    color: var(--text-muted);
+    font-size: 12px;
+}
+.g-ex-answer:hover::before { display: none; }
+
+.grammar-nav {
+    display: flex;
+    gap: 12px;
+    margin-top: 48px;
+    padding-top: 24px;
+    border-top: 1px solid var(--border-muted);
+}
+.grammar-nav a {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 14px 18px;
+    border: 1px solid var(--border-muted);
+    border-radius: var(--radius-md);
+    text-decoration: none;
+    color: var(--text-secondary);
+    font-size: 14px;
+    transition: border-color 0.15s, color 0.15s;
+}
+.grammar-nav a:hover { border-color: var(--accent-blue); color: var(--text-primary); }
+.grammar-nav a:last-child { justify-content: flex-end; text-align: right; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="grammar-meta">
+  <span class="grammar-meta__badge">{{ category_label }}</span>
+  <span class="grammar-meta__badge" style="background: rgba(63,185,80,0.12); color: var(--accent-green);">Уровень {{ topic.level }}</span>
+  <span style="color: var(--text-muted); font-size: 14px;">{{ topic.subtitle }}</span>
+</div>
+
+<article class="grammar-content">
+  <div class="g-essence">{{ topic.essence }}</div>
+
+  {% if topic.formulas %}
+  <section class="g-section">
+    <h2>Формула образования</h2>
+    <table class="g-table">
+      <thead>
+        <tr>
+          <th>Subject / Condition</th>
+          <th>+ Утверждение</th>
+          <th>- Отрицание</th>
+          <th>? Вопрос</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for f in topic.formulas %}
+        <tr>
+          <td style="font-weight:600; color:var(--text-primary);">{{ f.subject }}</td>
+          <td style="color:var(--accent-green);">{{ f.affirmative }}</td>
+          <td style="color:var(--accent-red);">{{ f.negative }}</td>
+          <td style="color:var(--accent-blue);">{{ f.question }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% if topic.formula_note %}
+    <div class="g-note">{{ topic.formula_note }}</div>
+    {% endif %}
+  </section>
+  {% endif %}
+
+  {% if topic.scenarios %}
+  <section class="g-section">
+    <h2>Сценарии использования</h2>
+    {% for sc in topic.scenarios %}
+    <div class="g-scenario">
+      <h3>{{ sc.title }}</h3>
+      <p>{{ sc.description }}</p>
+      <div class="g-examples">
+        {% for ex in sc.examples %}
+        <div class="g-example">
+          <span class="en">{{ ex.en }}{% if ex.note %}<span class="note">{{ ex.note }}</span>{% endif %}</span>
+          <span class="ru">{{ ex.ru }}</span>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+    {% endfor %}
+  </section>
+  {% endif %}
+
+  {% if topic.markers %}
+  <section class="g-section">
+    <h2>Маркеры времени (слова-подсказки)</h2>
+    <div class="g-markers">
+      {% for m in topic.markers %}
+      <span class="g-marker">{{ m }}</span>
+      {% endfor %}
+    </div>
+  </section>
+  {% endif %}
+
+  {% if topic.exercises %}
+  <section class="g-section">
+    <h2>Практика</h2>
+    {% for ex in topic.exercises %}
+    <div class="g-exercise">
+      <h3>{{ ex.title }}</h3>
+      <p>{{ ex.instruction }}</p>
+      {% for item in ex.items %}
+      <div class="g-ex-item">
+        • {{ item.question }} 
+        <span class="g-ex-answer" title="Ответ: {{ item.answer }}">{{ item.answer }}</span>
+      </div>
+      {% endfor %}
+    </div>
+    {% endfor %}
+  </section>
+  {% endif %}
+</article>
+
+<nav class="grammar-nav">
+  <a href="{% url 'grammar:list' %}">← Все темы</a>
+</nav>
+{% endblock %}

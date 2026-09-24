@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block title %}Резервные токены — English Platform{% endblock %}
+{% block page_title %}🔑 Резервные токены{% endblock %}
+
+{% block content %}
+<div class="auth-container">
+    <div class="card auth-card">
+        <h2 class="auth-card__title">Резервные токены</h2>
+        <p class="auth-card__hint">
+            Резервные токены можно использовать для входа, если у вас нет доступа к email.
+            Распечатайте и храните в надёжном месте.
+        </p>
+
+        {% if device.token_set.count %}
+            <ul style="list-style:none; padding:0; margin: 16px 0;">
+                {% for token in device.token_set.all %}
+                    <li style="font-family: monospace; font-size: 1.1rem; padding: 6px 0; border-bottom: 1px solid var(--border);">
+                        {{ token.token }}
+                    </li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <p style="margin: 16px 0; color: var(--text-muted);">У вас нет резервных токенов. Сгенерируйте их ниже.</p>
+        {% endif %}
+
+        <form method="post" class="auth-form">
+            {% csrf_token %}
+            {{ form.as_p }}
+            <div class="auth-form__actions">
+                <a href="{% url 'two_factor:profile' %}" class="btn btn--outline-sm">← Назад</a>
+                <button type="submit" class="btn btn--primary">Сгенерировать новые токены</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block title %}2FA включена — English Platform{% endblock %}
+{% block page_title %}🔐 Двухфакторная аутентификация{% endblock %}
+
+{% block content %}
+<div class="auth-container">
+    <div class="card auth-card">
+        <h2 class="auth-card__title">✅ 2FA успешно включена</h2>
+        <p class="auth-card__hint">
+            Двухфакторная аутентификация активирована. Теперь при каждом входе
+            вам будет приходить одноразовый код подтверждения.
+        </p>
+        <div class="auth-form__actions">
+            <a href="{% url 'two_factor:profile' %}" class="btn btn--primary">
+                К настройкам безопасности
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}

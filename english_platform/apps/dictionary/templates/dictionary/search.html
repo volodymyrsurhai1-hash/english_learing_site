@@ -21,20 +21,46 @@
     {% if result %}
     <div class="dictionary__result">
         <div class="card dictionary__header">
-            <h2 class="dictionary__word">{{ result.english }}</h2>
-            {% if result.transcription %}
-            <span class="dictionary__transcription font-mono">{{ result.transcription }}</span>
-            {% endif %}
-            {% if result.cefr %}
-            <span class="badge badge--cefr">{{ result.cefr }}</span>
-            {% endif %}
-            {% if result.part_of_speech %}
-            <span class="badge">{{ result.part_of_speech }}</span>
-            {% endif %}
+            <div class="dictionary__header-top">
+                <h2 class="dictionary__word">{{ result.english }}</h2>
+                <div class="dictionary__header-meta">
+                    {% if result.transcription %}
+                    <span class="dictionary__transcription font-mono">{{ result.transcription }}</span>
+                    {% endif %}
+                    {% if result.cefr %}
+                    <span class="badge badge--cefr">{{ result.cefr }}</span>
+                    {% endif %}
+                    {% if result.part_of_speech %}
+                    <span class="badge">{{ result.part_of_speech }}</span>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="dictionary__header-actions">
+                {% if user.is_authenticated %}
+                    {% if is_saved %}
+                    <form method="post" action="{% url 'dictionary:delete_word' %}">
+                        {% csrf_token %}
+                        <input type="hidden" name="word" value="{{ query }}">
+                        <button type="submit" class="btn btn--danger-sm">🗑 Удалить из сохранённых</button>
+                    </form>
+                    {% else %}
+                    <form method="post" action="{% url 'dictionary:save_word' %}">
+                        {% csrf_token %}
+                        <input type="hidden" name="word" value="{{ query }}">
+                        <button type="submit" class="btn btn--outline-sm">🔖 Сохранить</button>
+                    </form>
+                    {% endif %}
+                {% else %}
+                <a href="{% url 'two_factor:login' %}" class="btn btn--outline-sm">🔖 Войти чтобы сохранить</a>
+                {% endif %}
+            </div>
+
             {% if result.english_definition %}
             <p class="dictionary__definition">{{ result.english_definition }}</p>
             {% endif %}
         </div>
+
 
         {% if result.meanings %}
         <div class="card">
@@ -150,9 +176,10 @@
         </div>
         {% endif %}
     </div>
-    {% elif query %}
-    <div class="card dictionary__empty">
-        <p>Ничего не найдено по запросу «{{ query }}».</p>
+    {% elif error %}
+    <div class="card dictionary__error">
+        <span class="dictionary__error-icon">⚠️</span>
+        <p class="dictionary__error-text">{{ error }}</p>
     </div>
     {% endif %}
 </div>

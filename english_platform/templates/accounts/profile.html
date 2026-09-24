@@ -1,0 +1,102 @@
+{% extends "base.html" %}
+
+{% block title %}Кабинет — English Platform{% endblock %}
+{% block page_title %}👤 Кабинет{% endblock %}
+
+{% block content %}
+<div class="profile">
+
+    <div class="profile__stats">
+        <div class="stat-card">
+            <span class="stat-card__value">{{ count_all }}</span>
+            <span class="stat-card__label">Всего слов</span>
+        </div>
+        <div class="stat-card stat-card--learning">
+            <span class="stat-card__value">{{ count_learning }}</span>
+            <span class="stat-card__label">В процессе</span>
+        </div>
+        <div class="stat-card stat-card--learned">
+            <span class="stat-card__value">{{ count_learned }}</span>
+            <span class="stat-card__label">Выучено</span>
+        </div>
+    </div>
+
+    <div class="profile__filters">
+        <a href="?status=" class="profile__filter-btn{% if not status_filter %} profile__filter-btn--active{% endif %}">
+            Все
+        </a>
+        <a href="?status=LEARNING" class="profile__filter-btn{% if status_filter == 'LEARNING' %} profile__filter-btn--active{% endif %}">
+            В процессе
+        </a>
+        <a href="?status=LEARNED" class="profile__filter-btn{% if status_filter == 'LEARNED' %} profile__filter-btn--active{% endif %}">
+            Выучено
+        </a>
+    </div>
+
+    {% if words %}
+    <div class="word-grid">
+        {% for user_word in words %}
+        {% with t=user_word.word.full_translation %}
+        <div class="word-card{% if user_word.status == 'LEARNED' %} word-card--learned{% endif %}">
+            <div class="word-card__header">
+                <span class="word-card__word">{{ user_word.word.word }}</span>
+                {% if t.transcription %}
+                <span class="word-card__transcription font-mono">{{ t.transcription }}</span>
+                {% endif %}
+            </div>
+
+            <div class="word-card__meta">
+                {% if t.cefr %}
+                <span class="badge badge--cefr">{{ t.cefr }}</span>
+                {% endif %}
+                {% if t.part_of_speech %}
+                <span class="badge">{{ t.part_of_speech }}</span>
+                {% endif %}
+                {% if user_word.status == 'LEARNING' %}
+                <span class="badge badge--learning">В процессе</span>
+                {% else %}
+                <span class="badge badge--learned">Выучено</span>
+                {% endif %}
+            </div>
+
+            {% if t.meanings %}
+            <p class="word-card__translation">{{ t.meanings.0.ru|truncatechars:55 }}</p>
+            {% elif t.uses %}
+            <p class="word-card__translation">{{ t.uses.0.ru|truncatechars:55 }}</p>
+            {% endif %}
+
+            <div class="word-card__actions">
+                <form method="post" action="{% url 'dictionary:toggle_word' %}">
+                    {% csrf_token %}
+                    <input type="hidden" name="word" value="{{ user_word.word.word }}">
+                    <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                    {% if user_word.status == 'LEARNING' %}
+                    <button type="submit" class="btn btn--success-sm">✓ Знаю</button>
+                    {% else %}
+                    <button type="submit" class="btn btn--outline-sm">↩ Повторить</button>
+                    {% endif %}
+                </form>
+
+                <a href="/?q={{ user_word.word.word }}" class="btn btn--ghost-sm" title="Открыть в словаре">🔍</a>
+
+                <form method="post" action="{% url 'dictionary:delete_word' %}">
+                    {% csrf_token %}
+                    <input type="hidden" name="word" value="{{ user_word.word.word }}">
+                    <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                    <button type="submit" class="btn btn--ghost-sm btn--ghost-danger" title="Удалить">🗑</button>
+                </form>
+            </div>
+        </div>
+        {% endwith %}
+        {% endfor %}
+    </div>
+
+    {% else %}
+    <div class="card profile__empty">
+        <p>{% if status_filter %}Нет слов в этой категории.{% else %}Вы ещё не сохранили ни одного слова.{% endif %}</p>
+        <a href="{% url 'dictionary:search' %}" class="btn btn--primary-sm" style="margin-top:16px;">Перейти в словарь</a>
+    </div>
+    {% endif %}
+
+</div>
+{% endblock %}

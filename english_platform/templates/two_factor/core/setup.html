@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block title %}Настройка 2FA — English Platform{% endblock %}
+{% block page_title %}🔐 Двухфакторная аутентификация{% endblock %}
+
+{% block content %}
+<div class="auth-container">
+    <div class="card auth-card">
+
+        {% if wizard.steps.current == 'welcome' %}
+            <h2 class="auth-card__title">Включение 2FA</h2>
+            <p class="auth-card__hint">
+                Вы настраиваете двухфакторную аутентификацию. После включения при каждом входе
+                на ваш email будет приходить одноразовый код.
+            </p>
+
+        {% elif wizard.steps.current == 'method' %}
+            <h2 class="auth-card__title">Выберите метод</h2>
+            <p class="auth-card__hint">Выберите способ получения одноразового кода.</p>
+
+        {% elif wizard.steps.current == 'email' %}
+            <h2 class="auth-card__title">Email-адрес</h2>
+            <p class="auth-card__hint">
+                Укажите email, на который будут приходить коды подтверждения.
+            </p>
+
+        {% elif wizard.steps.current == 'validation' %}
+            <h2 class="auth-card__title">Подтверждение</h2>
+            <p class="auth-card__hint">
+                Мы отправили код на ваш email. Введите его для завершения настройки.
+            </p>
+
+        {% elif wizard.steps.current == 'generator' %}
+            <h2 class="auth-card__title">Сканируйте QR-код</h2>
+            <p class="auth-card__hint">
+                Отсканируйте QR-код приложением (Google Authenticator и т.п.), затем введите сгенерированный токен.
+            </p>
+            <p><img src="{{ QR_URL }}" alt="QR Code" style="display:block;margin:16px auto;"/></p>
+        {% endif %}
+
+        <form method="post" action="" class="auth-form" novalidate>
+            {% csrf_token %}
+            {{ wizard.management_form }}
+
+            {% for field in wizard.form %}
+                <div class="auth-form__group">
+                    <label class="auth-form__label" for="{{ field.id_for_label }}">
+                        {{ field.label }}
+                    </label>
+                    {{ field }}
+                    {% if field.errors %}
+                        <div class="auth-form__field-errors">
+                            {% for error in field.errors %}
+                                <span class="auth-card__error">{{ error }}</span>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+            {% endfor %}
+
+            <input type="submit" value="" hidden />
+
+            <div class="auth-form__actions">
+                {% if wizard.steps.prev %}
+                    <button name="wizard_goto_step" type="submit"
+                            value="{{ wizard.steps.prev }}"
+                            class="btn btn--outline-sm">← Назад</button>
+                {% else %}
+                    <span></span>
+                {% endif %}
+                <button type="submit" class="btn btn--primary">Далее →</button>
+            </div>
+        </form>
+
+    </div>
+</div>
+{% endblock %}

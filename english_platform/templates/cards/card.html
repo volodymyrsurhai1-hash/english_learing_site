@@ -1,0 +1,110 @@
+{% extends "base.html" %}
+
+{% block title %}Карточки — English Platform{% endblock %}
+{% block page_title %}📚 Карточки{% endblock %}
+
+{% block content %}
+<div class="flashcard-wrap">
+
+    <div class="flashcard-progress">
+        <div class="flashcard-progress__bar">
+            {% if total_all %}
+            <div class="flashcard-progress__fill" style="width: {% widthratio count_learned total_all 100 %}%"></div>
+            {% endif %}
+        </div>
+        <span class="flashcard-progress__label">{{ count_learned }} / {{ total_all }} выучено</span>
+    </div>
+
+    <div class="flashcard" id="flashcard">
+        <div class="flashcard__front">
+            <div class="flashcard__word">{{ user_word.word.word }}</div>
+            <div class="flashcard__meta">
+                {% with t=user_word.word.full_translation %}
+                {% if t.transcription %}
+                <span class="flashcard__transcription font-mono">{{ t.transcription }}</span>
+                {% endif %}
+                {% if t.cefr %}
+                <span class="badge badge--cefr">{{ t.cefr }}</span>
+                {% endif %}
+                {% if t.part_of_speech %}
+                <span class="badge">{{ t.part_of_speech }}</span>
+                {% endif %}
+                {% endwith %}
+            </div>
+            <span class="flashcard__hint">Нажмите, чтобы увидеть перевод</span>
+        </div>
+
+        <div class="flashcard__back" id="flashcard-back">
+            {% with t=user_word.word.full_translation %}
+            {% if t.meanings %}
+            <div class="flashcard__meanings">
+                {% for m in t.meanings|slice:":2" %}
+                <div class="flashcard__meaning">
+                    <p class="flashcard__meaning-ru">{{ m.ru|truncatechars:60 }}</p>
+                    {% if m.examples %}
+                    <p class="flashcard__example">{{ m.examples.0.en }}</p>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+            {% elif t.uses %}
+            <div class="flashcard__meanings">
+                {% for u in t.uses|slice:":2" %}
+                <div class="flashcard__meaning">
+                    <p class="flashcard__meaning-ru">{{ u.ru|truncatechars:60 }}</p>
+                    {% if u.examples %}
+                    <p class="flashcard__example">{{ u.examples.0.en }}</p>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+            {% endwith %}
+        </div>
+    </div>
+
+    <div class="flashcard__actions" id="flashcard-actions">
+        {% if next_pk %}
+        <a href="{% url 'cards:card' next_pk %}" class="btn flashcard__btn flashcard__btn--skip">
+            → Дальше
+        </a>
+        {% else %}
+        <a href="{% url 'cards:index' %}" class="btn flashcard__btn flashcard__btn--skip">
+            → Дальше
+        </a>
+        {% endif %}
+
+        <form method="post" action="{% url 'cards:learned' user_word.pk %}">
+            {% csrf_token %}
+            <input type="hidden" name="next_pk" value="{{ next_pk|default:'' }}">
+            <button type="submit" class="btn flashcard__btn flashcard__btn--learned">
+                ✓ Знаю это слово
+            </button>
+        </form>
+    </div>
+
+    <p class="flashcard__remaining">Осталось изучить: {{ remaining }}</p>
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const card = document.getElementById("flashcard");
+        const back = document.getElementById("flashcard-back");
+        const actions = document.getElementById("flashcard-actions");
+
+        back.style.display = "none";
+        actions.style.display = "none";
+
+        card.addEventListener("click", function () {
+            if (back.style.display === "none") {
+                back.style.display = "block";
+                actions.style.display = "flex";
+                card.classList.add("flashcard--revealed");
+            }
+        });
+    });
+</script>
+{% endblock %}

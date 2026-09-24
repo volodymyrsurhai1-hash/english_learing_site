@@ -1,0 +1,182 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}🎬 Films | English Platform{% endblock %}
+{% block page_title %}🎬 Films{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/films.css' %}">
+{% endblock %}
+
+{% block content %}
+{% if messages %}
+<div style="margin-bottom: 20px;">
+    {% for message in messages %}
+    <div class="card dictionary__error">
+        <span class="dictionary__error-icon">⚠️</span>
+        <p class="dictionary__error-text">{{ message }}</p>
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+
+{% if user.is_authenticated %}
+<div class="film-download-form">
+    <form id="film-download-form" method="post" action="{% url 'films:download' %}">
+        {% csrf_token %}
+        <input
+            id="film-url-input"
+            class="dictionary__input"
+            type="url"
+            name="url"
+            placeholder="YouTube URL..."
+            required
+            autocomplete="off"
+        >
+        <button id="film-download-btn" class="dictionary__btn" type="submit">Download</button>
+    </form>
+</div>
+
+<div id="download-progress-card" class="card download-progress-card" style="display: none;">
+    <div class="download-progress-header">
+        <span id="download-progress-status" class="download-progress-status">Starting download...</span>
+        <span id="download-progress-percent" class="download-progress-percent font-mono">0.0%</span>
+    </div>
+    <div class="download-progress-bar">
+        <div id="download-progress-fill" class="download-progress-fill" style="width: 0%;"></div>
+    </div>
+    <div class="download-progress-meta">
+        <span id="download-progress-speed" class="download-progress-meta-item"></span>
+        <span id="download-progress-eta" class="download-progress-meta-item"></span>
+    </div>
+    <div id="download-progress-error" class="download-progress-error" style="display: none;"></div>
+</div>
+{% endif %}
+
+{% if films %}
+<div class="film-grid">
+    {% for film in films %}
+    <a href="{% url 'films:watch' film.pk %}" class="film-card">
+        <div class="film-card__title">{{ film.title }}</div>
+        <div class="film-card__date">{{ film.created_at|date:"M d, Y" }}</div>
+        <span class="film-card__link">Watch →</span>
+    </a>
+    {% endfor %}
+</div>
+{% else %}
+<div class="dictionary__empty">
+    <p>No films yet. Paste a YouTube URL above to download your first video.</p>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    const downloadForm = document.getElementById('film-download-form');
+    const urlInput = document.getElementById('film-url-input');
+    const downloadBtn = document.getElementById('film-download-btn');
+    const progressCard = document.getElementById('download-progress-card');
+    const progressStatus = document.getElementById('download-progress-status');
+    const progressPercent = document.getElementById('download-progress-percent');
+    const progressFill = document.getElementById('download-progress-fill');
+    const progressSpeed = document.getElementById('download-progress-speed');
+    const progressEta = document.getElementById('download-progress-eta');
+    const progressError = document.getElementById('download-progress-error');
+
+    function getCsrfToken() {
+        const row = document.cookie.split('; ').find(function (r) {
+            return r.startsWith('csrftoken=');
+        });
+        return row ? row.split('=')[1] : '';
+    }
+
+    if (downloadForm) {
+        downloadForm.addEventListener('submit', function (e) {
+            e.preventDefault();
+            const url = urlInput.value.trim();
+            if (!url) {
+                return;
+            }
+
+            urlInput.disabled = true;
+            downloadBtn.disabled = true;
+            downloadBtn.textContent = 'Downloading...';
+            downloadBtn.classList.add('dictionary__btn--loading');
+
+            progressCard.style.display = 'block';
+            progressError.style.display = 'none';
+            progressStatus.textContent = 'Connecting to YouTube...';
+            progressPercent.textContent = '0.0%';
+            progressFill.style.width = '0%';
+            progressFill.classList.remove('download-progress-fill--error');
+            progressSpeed.textContent = '';
+            progressEta.textContent = '';
+
+            fetch('{% url "films:start_download" %}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCsrfToken()
+                },
+                body: JSON.stringify({ url: url })
+            })
+            .then(function (res) { return res.json(); })
+            .then(function (data) {
+                if (data.status === 'started' && data.task_id) {
+                    pollProgress(data.task_id);
+                } else {
+                    showError(data.message || 'Failed to start download');
+                }
+            })
+            .catch(function () {
+                showError('Network error starting download');
+            });
+        });
+    }
+
+    function pollProgress(taskId) {
+        const interval = setInterval(function () {
+            fetch('/films/api/download-progress/' + taskId + '/')
+                .then(function (res) { return res.json(); })
+                .then(function (data) {
+                    if (data.status === 'downloading' || data.status === 'processing') {
+                        const pct = (data.percent || 0).toFixed(1);
+                        progressPercent.textContent = pct + '%';
+                        progressFill.style.width = pct + '%';
+                        progressStatus.textContent = data.message || 'Downloading...';
+                        progressSpeed.textContent = data.speed ? '⚡ ' + data.speed : '';
+                        progressEta.textContent = data.eta ? '⏳ ETA ' + data.eta : '';
+                    } else if (data.status === 'completed') {
+                        clearInterval(interval);
+                        progressPercent.textContent = '100%';
+                        progressFill.style.width = '100%';
+                        progressStatus.textContent = '✅ Download complete! Opening video...';
+                        progressSpeed.textContent = '';
+                        progressEta.textContent = '';
+                        setTimeout(function () {
+                            window.location.href = '/films/' + data.film_id + '/';
+                        }, 600);
+                    } else if (data.status === 'error') {
+                        clearInterval(interval);
+                        showError(data.error || 'Download failed');
+                    }
+                })
+                .catch(function () {
+                    clearInterval(interval);
+                    showError('Failed to check progress');
+                });
+        }, 600);
+    }
+
+    function showError(msg) {
+        progressFill.classList.add('download-progress-fill--error');
+        progressError.style.display = 'block';
+        progressError.textContent = msg;
+        progressStatus.textContent = '❌ Download interrupted';
+        urlInput.disabled = false;
+        downloadBtn.disabled = false;
+        downloadBtn.classList.remove('dictionary__btn--loading');
+        downloadBtn.textContent = 'Download';
+    }
+</script>
+{% endblock %}

@@ -1,0 +1,545 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ film.title }} | English Platform{% endblock %}
+{% block page_title %}🎬 {{ film.title }}{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/films.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="film-watch-container">
+    <div class="film-watch-topbar">
+        <a href="{% url 'films:list' %}" class="btn btn--outline-sm">← All Films</a>
+        <span class="film-watch-title">{{ film.title }}</span>
+    </div>
+
+    <div class="film-player">
+        <div class="film-player-wrapper">
+            <button id="skip-back-btn" class="film-player__side-btn film-player__side-btn--left" type="button" title="Rewind 5s (← / J)" aria-label="Rewind 5 seconds">
+                <span class="film-player__side-icon">⏪</span>
+                <span class="film-player__side-text">5s</span>
+            </button>
+
+            <video id="video-player" controls preload="metadata">
+                <source src="{{ media_url }}{{ film.video_file }}" type="video/mp4">
+            </video>
+
+            <button id="skip-fwd-btn" class="film-player__side-btn film-player__side-btn--right" type="button" title="Forward 5s (→ / L)" aria-label="Forward 5 seconds">
+                <span class="film-player__side-icon">⏩</span>
+                <span class="film-player__side-text">5s</span>
+            </button>
+        </div>
+    </div>
+
+    <div class="subtitle-display">
+        <div id="subtitle-en" class="subtitle-en"></div>
+        {% if has_ru_subtitles %}
+        <div id="subtitle-ru" class="subtitle-ru subtitle-ru--hidden"></div>
+        {% endif %}
+    </div>
+
+    {% if has_ru_subtitles %}
+    <div class="subtitle-controls">
+        <button id="toggle-ru-btn" class="btn btn--outline-sm" type="button">🇷🇺 Show Russian</button>
+    </div>
+    {% endif %}
+
+    <div class="quick-lookup">
+        <div class="quick-lookup__form">
+            <input
+                id="quick-word-input"
+                class="dictionary__input quick-lookup__input"
+                type="text"
+                placeholder="Or type any word to translate..."
+                autocomplete="off"
+            >
+            <button id="quick-word-btn" class="dictionary__btn quick-lookup__btn" type="button">Translate</button>
+        </div>
+        <div id="quick-result" class="quick-lookup__result" style="display: none;"></div>
+    </div>
+
+    {% if other_films %}
+    <div class="film-watch-library">
+        <div class="film-watch-library__header">
+            <h2 class="card__title">🎬 All Films</h2>
+            <a href="{% url 'films:list' %}" class="btn btn--outline-sm">+ Add new film</a>
+        </div>
+        <div class="film-grid">
+            {% for item in other_films %}
+            <a href="{% url 'films:watch' item.pk %}" class="film-card{% if item.pk == film.pk %} film-card--active{% endif %}">
+                <div class="film-card__title">{{ item.title }}</div>
+                <div class="film-card__date">{{ item.created_at|date:"M d, Y" }}</div>
+                {% if item.pk == film.pk %}
+                <span class="badge badge--cefr">▶ Now Playing</span>
+                {% else %}
+                <span class="film-card__link">Watch →</span>
+                {% endif %}
+            </a>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    const subtitles = {{ subtitles_json|safe }};
+    const video = document.getElementById('video-player');
+    const subtitleEnEl = document.getElementById('subtitle-en');
+    const subtitleRuEl = document.getElementById('subtitle-ru');
+    const toggleRuBtn = document.getElementById('toggle-ru-btn');
+    const quickInput = document.getElementById('quick-word-input');
+    const quickBtn = document.getElementById('quick-word-btn');
+    const quickResult = document.getElementById('quick-result');
+    const skipBackBtn = document.getElementById("skip-back-btn");
+    const skipFwdBtn = document.getElementById("skip-fwd-btn");
+
+    let currentSubIdx = -1;
+    let popupEl = null;
+    let ruVisible = false;
+    const subOffset = 1.6;
+    let syncAnimFrame = null;
+
+    localStorage.removeItem("sub_offset");
+
+    if (skipBackBtn) {
+        skipBackBtn.addEventListener("click", function () {
+            video.currentTime = Math.max(0, video.currentTime - 5);
+        });
+    }
+
+    if (skipFwdBtn) {
+        skipFwdBtn.addEventListener("click", function () {
+            const maxTime = video.duration || video.currentTime + 5;
+            video.currentTime = Math.min(maxTime, video.currentTime + 5);
+        });
+    }
+
+    document.addEventListener("keydown", function (e) {
+        const activeTag = document.activeElement
+            ? document.activeElement.tagName.toLowerCase()
+            : "";
+        if (activeTag === "input" || activeTag === "textarea") {
+            return;
+        }
+
+        if (e.key === "ArrowRight" || e.key === "l" || e.key === "L") {
+            e.preventDefault();
+            const maxTime = video.duration || video.currentTime + 5;
+            video.currentTime = Math.min(maxTime, video.currentTime + 5);
+        } else if (e.key === "ArrowLeft" || e.key === "j" || e.key === "J") {
+            e.preventDefault();
+            video.currentTime = Math.max(0, video.currentTime - 5);
+        } else if (e.key === " ") {
+            e.preventDefault();
+            if (video.paused) {
+                video.play();
+            } else {
+                video.pause();
+            }
+        }
+    });
+
+    if (toggleRuBtn && subtitleRuEl) {
+        toggleRuBtn.addEventListener('click', function () {
+            ruVisible = !ruVisible;
+            if (ruVisible) {
+                subtitleRuEl.classList.remove('subtitle-ru--hidden');
+                toggleRuBtn.textContent = '🇷🇺 Hide Russian';
+            } else {
+                subtitleRuEl.classList.add('subtitle-ru--hidden');
+                toggleRuBtn.textContent = '🇷🇺 Show Russian';
+            }
+        });
+    }
+
+    function checkSubtitles() {
+        const currentTime = video.currentTime + subOffset;
+        let matchedIdx = -1;
+
+        for (let i = 0; i < subtitles.length; i++) {
+            if (currentTime >= subtitles[i].start && currentTime <= subtitles[i].end) {
+                matchedIdx = i;
+                break;
+            }
+        }
+
+        if (matchedIdx !== currentSubIdx) {
+            currentSubIdx = matchedIdx;
+            if (matchedIdx !== -1) {
+                renderSub(subtitles[matchedIdx]);
+            } else {
+                subtitleEnEl.innerHTML = '';
+                if (subtitleRuEl) {
+                    subtitleRuEl.textContent = '';
+                }
+            }
+        }
+    }
+
+    function syncLoop() {
+        if (!video.paused && !video.ended) {
+            checkSubtitles();
+            syncAnimFrame = requestAnimationFrame(syncLoop);
+        }
+    }
+
+    video.addEventListener('play', function () {
+        if (syncAnimFrame) {
+            cancelAnimationFrame(syncAnimFrame);
+        }
+        syncAnimFrame = requestAnimationFrame(syncLoop);
+    });
+
+    video.addEventListener('pause', function () {
+        if (syncAnimFrame) {
+            cancelAnimationFrame(syncAnimFrame);
+            syncAnimFrame = null;
+        }
+    });
+
+    video.addEventListener('seeked', checkSubtitles);
+    video.addEventListener('timeupdate', checkSubtitles);
+
+    function cleanWord(raw) {
+        return raw.replace(/^[^\w]+|[^\w]+$/g, '').toLowerCase();
+    }
+
+    function renderSub(sub) {
+        subtitleEnEl.innerHTML = '';
+        if (subtitleRuEl) {
+            subtitleRuEl.textContent = sub.ru || '';
+        }
+
+        if (!sub.en) {
+            return;
+        }
+
+        const tokens = sub.en.split(/(\s+)/);
+        tokens.forEach(function (token) {
+            if (/^\s+$/.test(token)) {
+                subtitleEnEl.appendChild(document.createTextNode(token));
+            } else {
+                const cleaned = cleanWord(token);
+                if (cleaned) {
+                    const span = document.createElement('span');
+                    span.className = 'subtitle-word';
+                    span.textContent = token;
+                    span.setAttribute('data-word', cleaned);
+                    span.addEventListener('click', onWordClick);
+                    subtitleEnEl.appendChild(span);
+                } else {
+                    subtitleEnEl.appendChild(document.createTextNode(token));
+                }
+            }
+        });
+    }
+
+    function getCsrfToken() {
+        const row = document.cookie.split('; ').find(function (r) {
+            return r.startsWith('csrftoken=');
+        });
+        return row ? row.split('=')[1] : '';
+    }
+
+    function onWordClick(e) {
+        e.stopPropagation();
+        video.pause();
+
+        const word = e.currentTarget.getAttribute('data-word');
+        if (!word) {
+            return;
+        }
+
+        document.querySelectorAll('.subtitle-word--active').forEach(function (el) {
+            el.classList.remove('subtitle-word--active');
+        });
+        e.currentTarget.classList.add('subtitle-word--active');
+
+        if (popupEl) {
+            popupEl.remove();
+            popupEl = null;
+        }
+
+        const rect = e.currentTarget.getBoundingClientRect();
+        popupEl = document.createElement('div');
+        popupEl.className = 'word-popup';
+
+        let popupLeft = rect.left + window.scrollX;
+        if (popupLeft + 310 > window.innerWidth) {
+            popupLeft = Math.max(10, window.innerWidth - 320);
+        }
+        popupEl.style.left = popupLeft + 'px';
+        popupEl.style.top = (rect.bottom + window.scrollY + 10) + 'px';
+
+        const headerEl = document.createElement('div');
+        headerEl.className = 'word-popup__header';
+
+        const titleEl = document.createElement('div');
+        titleEl.className = 'word-popup__word';
+        titleEl.textContent = word;
+        headerEl.appendChild(titleEl);
+        popupEl.appendChild(headerEl);
+
+        const statusEl = document.createElement('div');
+        statusEl.className = 'word-popup__loading';
+        statusEl.textContent = 'Looking up...';
+        popupEl.appendChild(statusEl);
+
+        document.body.appendChild(popupEl);
+
+        fetch('/films/api/translate/?word=' + encodeURIComponent(word))
+            .then(function (res) {
+                return res.json().then(function (data) {
+                    return { ok: res.ok, data: data };
+                });
+            })
+            .then(function (resp) {
+                statusEl.remove();
+
+                if (
+                    !resp.ok ||
+                    resp.data.error ||
+                    !resp.data.translation ||
+                    resp.data.translation === "No translation"
+                ) {
+                    const errEl = document.createElement("div");
+                    errEl.className = "word-popup__error";
+                    errEl.textContent =
+                        resp.data && resp.data.error
+                            ? resp.data.error
+                            : "No translation found";
+                    popupEl.appendChild(errEl);
+                    return;
+                }
+
+                const data = resp.data;
+
+                if (data.transcription || data.cefr) {
+                    const metaEl = document.createElement('div');
+                    metaEl.className = 'word-popup__meta';
+                    if (data.transcription) {
+                        const trEl = document.createElement('span');
+                        trEl.className = 'word-popup__transcription font-mono';
+                        trEl.textContent = data.transcription;
+                        metaEl.appendChild(trEl);
+                    }
+                    if (data.cefr) {
+                        const badgeEl = document.createElement('span');
+                        badgeEl.className = 'badge badge--cefr';
+                        badgeEl.textContent = data.cefr;
+                        metaEl.appendChild(badgeEl);
+                    }
+                    headerEl.appendChild(metaEl);
+                }
+
+                const transEl = document.createElement('div');
+                transEl.className = 'word-popup__translation';
+                transEl.textContent = data.translation || 'No translation';
+                popupEl.appendChild(transEl);
+
+                const saveBtn = document.createElement('button');
+                saveBtn.className = 'word-popup__save-btn';
+                saveBtn.type = 'button';
+                if (data.is_saved) {
+                    saveBtn.textContent = '✅ Saved in vocabulary';
+                    saveBtn.classList.add('word-popup__save-btn--saved');
+                } else {
+                    saveBtn.textContent = '🔖 Add to vocabulary';
+                    saveBtn.addEventListener('click', function () {
+                        saveWordToVocab(word, saveBtn);
+                    });
+                }
+                popupEl.appendChild(saveBtn);
+
+                const dictLink = document.createElement('a');
+                dictLink.className = 'word-popup__dict-link';
+                dictLink.href = '/?q=' + encodeURIComponent(word);
+                dictLink.target = '_blank';
+                dictLink.textContent = '📖 Full dictionary entry ↗';
+                popupEl.appendChild(dictLink);
+            })
+            .catch(function () {
+                statusEl.className = 'word-popup__error';
+                statusEl.textContent = 'Lookup failed. Please try again.';
+            });
+    }
+
+    function saveWordToVocab(word, btn) {
+        btn.disabled = true;
+        btn.textContent = 'Saving...';
+
+        fetch('/films/api/save-word/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCsrfToken()
+            },
+            body: JSON.stringify({ word: word })
+        })
+        .then(function (res) {
+            return res.json().then(function (data) {
+                return { status: res.status, data: data };
+            });
+        })
+        .then(function (resp) {
+            if (resp.status === 200) {
+                btn.textContent = '✅ Saved to vocabulary!';
+                btn.classList.add('word-popup__save-btn--saved');
+            } else if (resp.status === 401) {
+                btn.textContent = '⚠️ Log in to save';
+                btn.disabled = false;
+            } else {
+                btn.textContent = '❌ ' + (resp.data.message || 'Error');
+                btn.disabled = false;
+            }
+        })
+        .catch(function () {
+            btn.textContent = '❌ Failed to save';
+            btn.disabled = false;
+        });
+    }
+
+    function executeQuickLookup() {
+        const raw = quickInput.value.trim();
+        if (!raw) {
+            return;
+        }
+
+        if (
+            raw.includes("http://") ||
+            raw.includes("https://") ||
+            raw.includes("www.") ||
+            raw.includes("/")
+        ) {
+            quickResult.style.display = "block";
+            quickResult.innerHTML =
+                '<span class="word-popup__error">Please enter an English word or phrase, not a URL.</span>';
+            return;
+        }
+
+        const word = cleanWord(raw);
+        if (!word) {
+            quickResult.style.display = "block";
+            quickResult.innerHTML =
+                '<span class="word-popup__error">Please enter a valid English word.</span>';
+            return;
+        }
+
+        quickResult.style.display = "block";
+        quickResult.innerHTML =
+            '<span class="word-popup__loading">Looking up "' +
+            word +
+            '"...</span>';
+
+        fetch("/films/api/translate/?word=" + encodeURIComponent(word))
+            .then(function (res) {
+                return res.json().then(function (data) {
+                    return { ok: res.ok, data: data };
+                });
+            })
+            .then(function (resp) {
+                quickResult.innerHTML = "";
+
+                if (
+                    !resp.ok ||
+                    resp.data.error ||
+                    !resp.data.translation ||
+                    resp.data.translation === "No translation"
+                ) {
+                    const errorMsg =
+                        resp.data && resp.data.error
+                            ? resp.data.error
+                            : "No translation found";
+                    quickResult.innerHTML =
+                        '<span class="word-popup__error">' +
+                        errorMsg +
+                        "</span>";
+                    return;
+                }
+
+                const data = resp.data;
+                const header = document.createElement('div');
+                header.className = 'quick-lookup__header';
+
+                const wordLabel = document.createElement('strong');
+                wordLabel.className = 'quick-lookup__word';
+                wordLabel.textContent = word;
+                header.appendChild(wordLabel);
+
+                if (data.transcription) {
+                    const tr = document.createElement('span');
+                    tr.className = 'font-mono';
+                    tr.style.color = 'var(--text-secondary)';
+                    tr.style.fontSize = '13px';
+                    tr.textContent = ' ' + data.transcription;
+                    header.appendChild(tr);
+                }
+
+                if (data.cefr) {
+                    const cefr = document.createElement('span');
+                    cefr.className = 'badge badge--cefr';
+                    cefr.textContent = data.cefr;
+                    header.appendChild(cefr);
+                }
+
+                const translation = document.createElement('span');
+                translation.className = 'quick-lookup__translation';
+                translation.textContent = ' — ' + (data.translation || 'No translation');
+                header.appendChild(translation);
+
+                quickResult.appendChild(header);
+
+                const actions = document.createElement('div');
+                actions.className = 'quick-lookup__actions';
+
+                const saveBtn = document.createElement('button');
+                saveBtn.className = 'btn btn--outline-sm';
+                saveBtn.type = 'button';
+                if (data.is_saved) {
+                    saveBtn.textContent = '✅ In vocabulary';
+                    saveBtn.classList.add('word-popup__save-btn--saved');
+                } else {
+                    saveBtn.textContent = '🔖 Add to vocabulary';
+                    saveBtn.addEventListener('click', function () {
+                        saveWordToVocab(word, saveBtn);
+                    });
+                }
+                actions.appendChild(saveBtn);
+
+                const dictLink = document.createElement('a');
+                dictLink.className = 'btn btn--ghost-sm';
+                dictLink.href = '/?q=' + encodeURIComponent(word);
+                dictLink.target = '_blank';
+                dictLink.textContent = '📖 View in Dictionary ↗';
+                actions.appendChild(dictLink);
+
+                quickResult.appendChild(actions);
+            })
+            .catch(function () {
+                quickResult.innerHTML = '<span class="word-popup__error">Failed to lookup word</span>';
+            });
+    }
+
+    quickBtn.addEventListener('click', executeQuickLookup);
+    quickInput.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            executeQuickLookup();
+        }
+    });
+
+    document.addEventListener('click', function (e) {
+        if (popupEl && !popupEl.contains(e.target) && !e.target.classList.contains('subtitle-word')) {
+            popupEl.remove();
+            popupEl = null;
+            document.querySelectorAll('.subtitle-word--active').forEach(function (el) {
+                el.classList.remove('subtitle-word--active');
+            });
+        }
+    });
+</script>
+{% endblock %}

@@ -5,27 +5,54 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}English Platform{% endblock %}</title>
+    <title>{% block title %}VSeng{% endblock %}</title>
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet">
 
-    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+    <link rel="stylesheet" href="{% static 'css/style.css' %}?v=3">
     {% block extra_css %}{% endblock %}
 </head>
 <body class="body">
     <div class="layout">
         <aside class="sidebar" id="sidebar">
-            <div class="sidebar__logo">
-                <span class="sidebar__logo-icon">🇬🇧</span>
-                <span class="sidebar__logo-text">English Platform</span>
-            </div>
+            <a href="/" class="sidebar__logo" style="text-decoration: none !important; color: inherit !important;">
+                <div class="sidebar__logo-mark">
+                    <svg width="34" height="34" viewBox="0 0 34 34" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <rect width="34" height="34" rx="9" fill="url(#vs-bg)" stroke="url(#vs-border)" stroke-width="1.2"/>
+                        <path d="M7.5 10.5L12.5 22.5L17.5 10.5" stroke="url(#vs-v-grad)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M26.5 12C26.5 11 25.5 10 23.5 10C21 10 20 11.2 20 12.8C20 15 22.2 15.8 24.5 16.5C26.8 17.2 27 18.5 27 20C27 22 25.5 23 23.5 23C21.2 23 20 21.8 20 20.8" stroke="url(#vs-s-grad)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+                        <defs>
+                            <linearGradient id="vs-bg" x1="0" y1="0" x2="34" y2="34" gradientUnits="userSpaceOnUse">
+                                <stop stop-color="#182030"/>
+                                <stop offset="1" stop-color="#0d1117"/>
+                            </linearGradient>
+                            <linearGradient id="vs-border" x1="0" y1="0" x2="34" y2="34" gradientUnits="userSpaceOnUse">
+                                <stop stop-color="#58a6ff" stop-opacity="0.4"/>
+                                <stop offset="1" stop-color="#bc8cff" stop-opacity="0.2"/>
+                            </linearGradient>
+                            <linearGradient id="vs-v-grad" x1="7.5" y1="10.5" x2="17.5" y2="22.5" gradientUnits="userSpaceOnUse">
+                                <stop stop-color="#58a6ff"/>
+                                <stop offset="1" stop-color="#79c0ff"/>
+                            </linearGradient>
+                            <linearGradient id="vs-s-grad" x1="20" y1="10" x2="27" y2="23" gradientUnits="userSpaceOnUse">
+                                <stop stop-color="#bc8cff"/>
+                                <stop offset="1" stop-color="#d2a8ff"/>
+                            </linearGradient>
+                        </defs>
+                    </svg>
+                </div>
+                <div class="sidebar__logo-brand">
+                    <span class="sidebar__logo-title">VS<span class="sidebar__logo-title-accent">eng</span></span>
+                    <span class="sidebar__logo-tagline">Tutor Platform</span>
+                </div>
+            </a>
 
             {% get_menu as menu %}
             <ul class="sidebar__menu">
                 {% for item in menu %}
-                <li class="sidebar__item{% if item.active %} sidebar__item--active{% endif %}">
+                <li class="sidebar__item{% if request.path == item.url %} sidebar__item--active{% elif item.url != '/' and item.url in request.path %} sidebar__item--active{% endif %}">
                     <a href="{{ item.url }}"
                        class="sidebar__link{% if item.disabled %} sidebar__link--disabled{% endif %}">
                         <span class="sidebar__icon">{{ item.icon }}</span>
@@ -46,7 +73,10 @@
                     {% block topbar_actions %}{% endblock %}
                     {% if user.is_authenticated %}
                     <div class="topbar__user">
-                        <span class="topbar__user-email">{{ user.email }}</span>
+                        <div class="topbar__user-chip">
+                            <span class="topbar__user-avatar">{{ user.email|slice:":1"|upper }}</span>
+                            <span class="topbar__user-email">{{ user.email }}</span>
+                        </div>
                         <form method="post" action="{% url 'logout' %}" class="topbar__logout-form">
                             {% csrf_token %}
                             <button type="submit" class="btn btn--outline-sm">Выйти</button>
@@ -54,7 +84,7 @@
                     </div>
                     {% else %}
                     <div class="topbar__auth">
-                        <a href="{% url 'login' %}" class="btn btn--outline-sm">Войти</a>
+                        <a href="{% url 'two_factor:login' %}" class="btn btn--outline-sm">Войти</a>
                         <a href="{% url 'register' %}" class="btn btn--primary-sm">Регистрация</a>
                     </div>
                     {% endif %}

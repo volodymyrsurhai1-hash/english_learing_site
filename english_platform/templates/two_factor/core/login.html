@@ -1,0 +1,143 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% load two_factor_tags %}
+
+{% block title %}Вход — English Platform{% endblock %}
+{% block page_title %}👤 Вход{% endblock %}
+
+{% block content %}
+<div class="auth-container">
+    <div class="card auth-card">
+
+        {% if wizard.steps.current == 'auth' %}
+            <h2 class="auth-card__title">Вход в аккаунт</h2>
+        {% elif wizard.steps.current == 'token' %}
+            <h2 class="auth-card__title">🔐 Подтверждение входа</h2>
+        {% elif wizard.steps.current == 'backup' %}
+            <h2 class="auth-card__title">🔑 Резервный токен</h2>
+        {% endif %}
+
+        {% if wizard.form.non_field_errors %}
+            <div class="auth-card__errors">
+                {% for error in wizard.form.non_field_errors %}
+                    <p class="auth-card__error">{{ error }}</p>
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        {% if wizard.steps.current == 'token' %}
+            <div class="auth-card__info-box">
+                <p class="auth-card__hint">
+                    Мы отправили 6-значный код подтверждения на вашу почту:
+                </p>
+                <div class="auth-card__email-badge">
+                    ✉️ {{ device.email|default:device.user.email }}
+                </div>
+                <p class="auth-card__subhint">
+                    Введите его ниже для входа в аккаунт. Если письма нет во входящих — проверьте папку «Спам».
+                </p>
+            </div>
+        {% elif wizard.steps.current == 'backup' %}
+            <div class="auth-card__info-box">
+                <p class="auth-card__hint">
+                    Введите один из ваших резервных токенов для входа в аккаунт.
+                </p>
+            </div>
+        {% endif %}
+
+        <form method="post" action="" class="auth-form" novalidate>
+            {% csrf_token %}
+            {{ wizard.management_form }}
+
+            {% for field in wizard.form %}
+                <div class="auth-form__group{% if wizard.steps.current == 'token' %} auth-form__group--center{% endif %}">
+                    <label class="auth-form__label" for="{{ field.id_for_label }}">
+                        {% if wizard.steps.current == 'token' %}
+                            Код подтверждения
+                        {% elif wizard.steps.current == 'backup' %}
+                            Резервный код
+                        {% else %}
+                            {{ field.label }}
+                        {% endif %}
+                    </label>
+
+                    {{ field }}
+
+                    {% if field.errors %}
+                        <div class="auth-form__field-errors">
+                            {% for error in field.errors %}
+                                <span class="auth-card__error">{{ error }}</span>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+            {% endfor %}
+
+            <input type="submit" value="" hidden />
+
+            <div class="auth-form__actions">
+                {% if wizard.steps.prev %}
+                    <button name="wizard_goto_step" type="submit"
+                            value="{{ wizard.steps.prev }}"
+                            class="btn btn--outline-sm">← Назад</button>
+                {% endif %}
+                <button type="submit" class="btn btn--primary auth-form__submit">
+                    {% if wizard.steps.current == 'auth' %}Войти{% else %}Подтвердить вход{% endif %}
+                </button>
+            </div>
+        </form>
+
+        {% if other_devices %}
+            <div class="auth-card__footer">
+                <p>Другие способы входа:</p>
+                <form method="post" action="">
+                    {% csrf_token %}
+                    {{ wizard.management_form }}
+                    {% for other in other_devices %}
+                        <button name="challenge_device" value="{{ other.persistent_id }}"
+                                class="btn btn--outline-sm" type="submit">
+                            {{ other|as_action }}
+                        </button>
+                    {% endfor %}
+                </form>
+            </div>
+        {% endif %}
+
+        {% if backup_tokens %}
+            <div class="auth-card__footer">
+                <form method="post" action="">
+                    {% csrf_token %}
+                    {{ wizard.management_form }}
+                    <button name="wizard_goto_step" type="submit" value="backup"
+                            class="btn btn--ghost-sm">
+                        Использовать резервный токен
+                    </button>
+                </form>
+            </div>
+        {% endif %}
+
+        {% if wizard.steps.current == 'auth' %}
+            <div class="auth-card__footer">
+                <span>Нет аккаунта?</span>
+                <a href="{% url 'register' %}" class="auth-card__link">Зарегистрироваться</a>
+            </div>
+        {% endif %}
+
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const otpInput = document.querySelector('input[name$="otp_token"]');
+        if (otpInput) {
+            otpInput.setAttribute("placeholder", "000000");
+            otpInput.setAttribute("maxlength", "6");
+            otpInput.setAttribute("inputmode", "numeric");
+            otpInput.setAttribute("autocomplete", "one-time-code");
+            otpInput.focus();
+        }
+    });
+</script>
+{% endblock %}

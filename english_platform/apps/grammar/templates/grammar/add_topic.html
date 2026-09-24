@@ -1,0 +1,119 @@
+{% extends "base.html" %}
+
+{% block title %}Создать тему с ИИ — English Platform{% endblock %}
+{% block page_title %}✨ Новая тема по грамматике{% endblock %}
+
+{% block content %}
+<div class="auth-container">
+    <div class="card auth-card" style="max-width: 520px;">
+        <h2 class="auth-card__title">Генерация конспекта с ИИ</h2>
+        <p style="font-size: 14px; color: var(--text-secondary); text-align: center; margin-top: -16px; margin-bottom: 24px; line-height: 1.5;">
+            Введите любое грамматическое правило. ИИ сформирует структурированный конспект с формулами, примерами и упражнениями.
+        </p>
+
+        {% if error %}
+        <div class="auth-card__errors">
+            <p class="auth-card__error">{{ error }}</p>
+        </div>
+        {% endif %}
+
+        <form method="post" class="auth-form" id="ai-topic-form" novalidate>
+            {% csrf_token %}
+
+            <div class="auth-form__group">
+                <label class="auth-form__label" for="topic_name">Название правила или конструкции</label>
+                <input
+                    type="text"
+                    id="topic_name"
+                    name="topic_name"
+                    value="{{ topic_name|default:'' }}"
+                    placeholder="например: Mixed Conditionals, Subjunctive Mood..."
+                    autocomplete="off"
+                    autofocus
+                    required
+                >
+            </div>
+
+            <div style="margin-bottom: 20px;">
+                <span style="font-size: 12px; color: var(--text-muted); display: block; margin-bottom: 8px;">Примеры для быстрого старта:</span>
+                <div style="display: flex; flex-wrap: wrap; gap: 6px;">
+                    <button type="button" class="topic-chip" data-query="Mixed Conditionals">Mixed Conditionals</button>
+                    <button type="button" class="topic-chip" data-query="Future Continuous">Future Continuous</button>
+                    <button type="button" class="topic-chip" data-query="Gerund vs Infinitive">Gerund vs Infinitive</button>
+                    <button type="button" class="topic-chip" data-query="Inversion in English">Inversion</button>
+                </div>
+            </div>
+
+            <button type="submit" class="btn btn--primary auth-form__submit" id="generate-btn">
+                ✨ Сгенерировать тему
+            </button>
+        </form>
+
+        <div class="auth-card__footer">
+            <a href="{% url 'grammar:list' %}" class="auth-card__link">← Назад к грамматике</a>
+        </div>
+    </div>
+</div>
+
+<style>
+.topic-chip {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-default);
+    color: var(--text-secondary);
+    padding: 4px 10px;
+    border-radius: 999px;
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.topic-chip:hover {
+    border-color: var(--accent-blue);
+    color: var(--accent-blue);
+    background: var(--bg-card-hover);
+}
+
+.btn--loading {
+    opacity: 0.7;
+    cursor: not-allowed;
+}
+</style>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const form = document.getElementById("ai-topic-form");
+    const input = document.getElementById("topic_name");
+    const submitBtn = document.getElementById("generate-btn");
+    const chips = document.querySelectorAll(".topic-chip");
+
+    chips.forEach(function (chip) {
+        chip.addEventListener("click", function () {
+            input.value = this.getAttribute("data-query");
+            input.focus();
+        });
+    });
+
+    let isSubmitting = false;
+
+    form.addEventListener("submit", function (e) {
+        const val = input.value.trim();
+        if (!val || isSubmitting) {
+            e.preventDefault();
+            return;
+        }
+
+        isSubmitting = true;
+        submitBtn.disabled = true;
+        submitBtn.classList.add("btn--loading");
+        submitBtn.textContent = "✨ ИИ составляет конспект...";
+    });
+
+    window.addEventListener("pageshow", function () {
+        isSubmitting = false;
+        submitBtn.disabled = false;
+        submitBtn.classList.remove("btn--loading");
+        submitBtn.textContent = "✨ Сгенерировать тему";
+    });
+});
+</script>
+{% endblock %}

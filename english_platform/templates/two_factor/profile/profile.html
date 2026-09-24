@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% load two_factor_tags %}
+
+{% block title %}Безопасность аккаунта — English Platform{% endblock %}
+{% block page_title %}🔐 Безопасность аккаунта{% endblock %}
+
+{% block content %}
+<div class="profile">
+
+    {% if default_device %}
+        <div class="card" style="padding: 24px; margin-bottom: 24px;">
+            <h3 style="margin-bottom: 8px;">Двухфакторная аутентификация</h3>
+            <p style="margin-bottom: 16px;">
+                <span class="badge badge--learned">✓ Включена</span>
+                &nbsp;Основной метод: <strong>{{ default_device|as_action }}</strong>
+            </p>
+            <div style="display:flex; gap: 12px; flex-wrap: wrap;">
+                <a href="{% url 'two_factor:backup_tokens' %}" class="btn btn--outline-sm">
+                    🔑 Резервные токены ({{ backup_tokens }})
+                </a>
+                <a href="{% url 'two_factor:disable' %}" class="btn btn--ghost-sm btn--ghost-danger">
+                    Отключить 2FA
+                </a>
+            </div>
+        </div>
+
+    {% else %}
+        <div class="card" style="padding: 24px; margin-bottom: 24px;">
+            <h3 style="margin-bottom: 8px;">Двухфакторная аутентификация</h3>
+            <p style="margin-bottom: 16px;">
+                <span class="badge">Отключена</span>
+                &nbsp;Включите 2FA, чтобы повысить безопасность аккаунта.
+            </p>
+            <a href="{% url 'two_factor:setup' %}" class="btn btn--primary">
+                Включить 2FA
+            </a>
+        </div>
+    {% endif %}
+
+    <div style="margin-top: 8px;">
+        <a href="{% url 'profile' %}" class="btn btn--outline-sm">← Вернуться в кабинет</a>
+    </div>
+
+</div>
+{% endblock %}

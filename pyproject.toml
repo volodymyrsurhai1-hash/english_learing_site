@@ -7,15 +7,19 @@ requires-python = ">=3.13"
 dependencies = [
     "aiogram>=3.30.0",
     "django>=6.1",
+    "django-two-factor-auth>=1.18.1",
     "dotenv>=0.9.9",
     "google>=3.0.0",
     "google-genai>=2.19.0",
+    "markdown>=3.10.3",
     "protobuf>=7.36.0",
     "psycopg2-binary>=2.9.13",
     "pydantic>=2.10.0",
+    "yt-dlp>=2026.8.19",
 ]
 
 [dependency-groups]
 dev = [
+    "black>=26.5.1",
     "django-stubs>=6.1.0",
 ]

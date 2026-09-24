@@ -1,4 +1,5 @@
 from django.apps import AppConfig
 
+
 class DictionaryConfig(AppConfig):
-    name = 'apps.dictionary'
+    name = "apps.dictionary"
