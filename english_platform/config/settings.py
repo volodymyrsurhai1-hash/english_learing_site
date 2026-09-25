@@ -15,9 +15,25 @@ PATREON_WEBHOOK_SECRET: str = os.environ.get("PATREON_WEBHOOK_SECRET", "")
 GEMINI_API_KEY = os.environ.get("GEMINI_API")
 GEMINI_MODEL: str = os.environ.get("GEMINI_MODEL", "gemini-3.6-flash")
 
-DEBUG = True
+DEBUG: bool = os.environ.get("DEBUG", "False").lower() in ("true", "1", "yes")
 
-ALLOWED_HOSTS: list[str] = ["*"] if DEBUG else []
+ALLOWED_HOSTS: list[str] = [
+    host.strip()
+    for host in os.environ.get(
+        "ALLOWED_HOSTS",
+        "*" if DEBUG else "vsenglish.me,www.vsenglish.me,localhost,127.0.0.1",
+    ).split(",")
+    if host.strip()
+]
+
+CSRF_TRUSTED_ORIGINS: list[str] = [
+    origin.strip()
+    for origin in os.environ.get(
+        "CSRF_TRUSTED_ORIGINS",
+        "https://vsenglish.me,https://www.vsenglish.me,http://localhost,http://127.0.0.1",
+    ).split(",")
+    if origin.strip()
+]
 
 
 INSTALLED_APPS = [
@@ -131,8 +147,19 @@ STATIC_URL = "static/"
 STATICFILES_DIRS: list[Path] = [
     BASE_DIR / "static",
 ]
+STATIC_ROOT: Path = BASE_DIR / "staticfiles"
 
 MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+if not DEBUG:
+    SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+    SECURE_SSL_REDIRECT = (
+        os.environ.get("SECURE_SSL_REDIRECT", "True").lower() == "true"
+    )
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+    SECURE_BROWSER_XSS_FILTER = True
+    SECURE_CONTENT_TYPE_NOSNIFF = True

@@ -1,0 +1,15 @@
+.git
+.gitignore
+.venv
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+.idea
+.vscode
+*.md
+.env
+staticfiles
+english_platform/staticfiles
+english_platform/media/*.mp4
+english_platform/media/*.srt
