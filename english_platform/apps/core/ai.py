@@ -1,3 +1,4 @@
+import logging
 from abc import ABC, abstractmethod
 from functools import lru_cache
 from typing import TypeVar, cast
@@ -7,6 +8,8 @@ from google import genai
 from google.genai import types
 from openai import OpenAI
 from pydantic import BaseModel
+
+logger = logging.getLogger(__name__)
 
 T = TypeVar("T", bound=BaseModel)
 
@@ -23,6 +26,9 @@ class OpenAIProvider(LLMProvider):
         self._model: str = model
 
     def generate_structured(self, prompt: str, schema: type[T]) -> T:
+        logger.info(
+            "Requesting structured completion from OpenAI model '%s'", self._model
+        )
         completion = self._client.beta.chat.completions.parse(
             model=self._model,
             messages=[{"role": "user", "content": prompt}],
@@ -30,7 +36,14 @@ class OpenAIProvider(LLMProvider):
         )
         parsed: T | None = completion.choices[0].message.parsed
         if parsed is None:
+            logger.error(
+                "OpenAI model '%s' failed to parse structured output", self._model
+            )
             raise ValueError("Failed to parse structured output from OpenAI response")
+        logger.info(
+            "Successfully received structured response from OpenAI model '%s'",
+            self._model,
+        )
         return parsed
 
 
@@ -40,6 +53,7 @@ class GeminiProvider(LLMProvider):
         self._model: str = model
 
     def generate_structured(self, prompt: str, schema: type[T]) -> T:
+        logger.info("Requesting structured content from Gemini model '%s'", self._model)
         response = self._client.models.generate_content(
             model=self._model,
             contents=prompt,
@@ -50,6 +64,10 @@ class GeminiProvider(LLMProvider):
                     disable=True
                 ),
             ),
+        )
+        logger.info(
+            "Successfully received structured response from Gemini model '%s'",
+            self._model,
         )
         if isinstance(response.parsed, schema):
             return response.parsed

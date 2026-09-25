@@ -1,4 +1,5 @@
 import json
+import logging
 import re
 import threading
 import uuid
@@ -12,6 +13,8 @@ from django.db import connection
 from django.http import HttpRequest, HttpResponse, JsonResponse
 from django.shortcuts import redirect
 from django.views.generic import DetailView, ListView, View
+
+logger = logging.getLogger(__name__)
 
 
 from apps.subscriptions.models import ActionType
@@ -28,6 +31,9 @@ from apps.films.subtitle_parser import load_bilingual_subtitles
 
 
 def _execute_download_task(task_id: str, url: str, user: Any = None) -> None:
+    logger.info(
+        "Starting video download task %s for URL: %s (user: %s)", task_id, url, user
+    )
     try:
         result = download_video(url, task_id=task_id)
 
@@ -35,6 +41,7 @@ def _execute_download_task(task_id: str, url: str, user: Any = None) -> None:
             clean_error = re.sub(
                 r"\x1b\[[0-9;]*m", "", result.error or "Download failed"
             )
+            logger.error("Video download task %s failed: %s", task_id, clean_error)
             progress_tracker.update_task(
                 task_id=task_id,
                 status="error",
@@ -66,6 +73,11 @@ def _execute_download_task(task_id: str, url: str, user: Any = None) -> None:
         if user and user.is_authenticated:
             QuotaService.consume(user, ActionType.VIDEO_DOWNLOAD)
 
+        logger.info(
+            "Video download task %s completed successfully (film_id: %s)",
+            task_id,
+            film.pk,
+        )
         progress_tracker.update_task(
             task_id=task_id,
             status="completed",
@@ -75,6 +87,7 @@ def _execute_download_task(task_id: str, url: str, user: Any = None) -> None:
         )
     except Exception as exc:
         clean_error = re.sub(r"\x1b\[[0-9;]*m", "", str(exc))
+        logger.exception("Unexpected error in download task %s: %s", task_id, exc)
         progress_tracker.update_task(
             task_id=task_id,
             status="error",

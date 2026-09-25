@@ -1,3 +1,4 @@
+import logging
 from typing import Any
 
 from django.contrib.auth.mixins import LoginRequiredMixin
@@ -5,6 +6,8 @@ from django.http import HttpRequest, HttpResponse
 from django.shortcuts import redirect, render
 from django.views import View
 from django.views.generic import DetailView, TemplateView
+
+logger = logging.getLogger(__name__)
 
 
 from apps.subscriptions.models import ActionType
@@ -142,11 +145,27 @@ class AddTopicView(LoginRequiredMixin, View):
                 },
             )
 
+        logger.info(
+            "User %s requested grammar topic generation for '%s'",
+            request.user.email,
+            topic_name,
+        )
         try:
             topic: Topic = create_ai_topic(topic_name, request.user)
             QuotaService.consume(request.user, ActionType.GRAMMAR_GENERATION)
+            logger.info(
+                "Successfully created grammar topic '%s' (id: %s) for user %s",
+                topic.title,
+                topic.pk,
+                request.user.email,
+            )
             return redirect(topic.get_absolute_url())
         except TopicNotFoundError as exc:
+            logger.warning(
+                "Grammar topic not found or invalid: %s (user: %s)",
+                topic_name,
+                request.user.email,
+            )
             return render(
                 request,
                 self.template_name,
@@ -158,6 +177,12 @@ class AddTopicView(LoginRequiredMixin, View):
                 },
             )
         except Exception as exc:
+            logger.exception(
+                "Failed to generate grammar topic '%s' for user %s: %s",
+                topic_name,
+                request.user.email,
+                exc,
+            )
             return render(
                 request,
                 self.template_name,

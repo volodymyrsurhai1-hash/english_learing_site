@@ -1,3 +1,4 @@
+import logging
 from typing import Any
 
 from django.contrib import messages
@@ -10,6 +11,8 @@ from django_otp.plugins.otp_email.models import EmailDevice
 
 from apps.dictionary.models import UserWord
 from apps.users.forms import RegisterForm
+
+logger = logging.getLogger(__name__)
 
 
 def register(request: HttpRequest) -> HttpResponse:
@@ -27,6 +30,7 @@ def register(request: HttpRequest) -> HttpResponse:
                 email=user.email,
                 confirmed=True,
             )
+            logger.info("New user registered: %s", user.email)
             messages.success(
                 request,
                 "Вы успешно зарегистрировались! Теперь вы можете войти в аккаунт.",

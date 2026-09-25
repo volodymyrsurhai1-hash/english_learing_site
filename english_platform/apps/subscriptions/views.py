@@ -1,6 +1,7 @@
 import hashlib
 import hmac
 import json
+import logging
 from typing import Any
 
 from django.conf import settings
@@ -12,6 +13,8 @@ from django.views.decorators.csrf import csrf_exempt
 
 from .models import Plan, PlanTier
 
+logger = logging.getLogger(__name__)
+
 User = get_user_model()
 
 
@@ -20,6 +23,7 @@ class PatreonWebhookView(View):
     def post(self, request: HttpRequest) -> HttpResponse:
         secret: str = getattr(settings, "PATREON_WEBHOOK_SECRET", "")
         if not secret:
+            logger.error("PATREON_WEBHOOK_SECRET is not configured")
             return HttpResponse(status=500)
 
         signature: str = request.headers.get("X-Patreon-Signature", "")
@@ -30,11 +34,13 @@ class PatreonWebhookView(View):
         ).hexdigest()
 
         if not hmac.compare_digest(digest, signature):
+            logger.warning("Patreon webhook signature mismatch: received %s", signature)
             return HttpResponse(status=403)
 
         try:
             payload: dict[str, Any] = json.loads(request.body)
         except json.JSONDecodeError:
+            logger.error("Failed to decode JSON from Patreon webhook payload")
             return HttpResponse(status=400)
 
         data: dict[str, Any] = payload.get("data", {})
@@ -76,4 +82,10 @@ class PatreonWebhookView(View):
             user.plan = free_plan
 
         user.save(update_fields=["plan"])
+        logger.info(
+            "Patreon webhook updated plan for user %s to %s (patron_status: %s)",
+            user.email,
+            user.plan.name if user.plan else "None",
+            patron_status,
+        )
         return HttpResponse(status=200)
