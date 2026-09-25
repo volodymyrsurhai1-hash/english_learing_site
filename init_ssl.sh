@@ -17,15 +17,15 @@ fi
 
 docker compose -f docker-compose.prod.yml up -d nginx
 
-rm -rf "$CERT_DIR"
-
-docker compose -f docker-compose.prod.yml run --rm certbot certonly \
+docker compose -f docker-compose.prod.yml run --rm --entrypoint certbot certbot certonly \
   --webroot \
   --webroot-path=/var/www/certbot \
   --email "$EMAIL" \
   --agree-tos \
   --no-eff-email \
+  --force-renewal \
   -d "$DOMAIN" \
   -d "www.$DOMAIN"
 
 docker compose -f docker-compose.prod.yml exec nginx nginx -s reload
+docker compose -f docker-compose.prod.yml up -d certbot
