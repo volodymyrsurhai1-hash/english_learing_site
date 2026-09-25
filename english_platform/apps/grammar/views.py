@@ -6,6 +6,9 @@ from django.shortcuts import redirect, render
 from django.views import View
 from django.views.generic import DetailView, TemplateView
 
+
+from apps.subscriptions.models import ActionType
+from apps.subscriptions.services import QuotaService
 from apps.grammar.data import CATEGORIES
 from apps.grammar.models import Topic
 from apps.grammar.services import (
@@ -98,25 +101,61 @@ class AddTopicView(LoginRequiredMixin, View):
     template_name: str = "grammar/add_topic.html"
 
     def get(self, request: HttpRequest) -> HttpResponse:
-        return render(request, self.template_name)
+        remaining, limit = QuotaService.get_remaining(
+            request.user, ActionType.GRAMMAR_GENERATION
+        )
+        return render(
+            request,
+            self.template_name,
+            {"remaining": remaining, "limit": limit},
+        )
 
     def post(self, request: HttpRequest) -> HttpResponse:
         topic_name: str = request.POST.get("topic_name", "").strip()
+        remaining, limit = QuotaService.get_remaining(
+            request.user, ActionType.GRAMMAR_GENERATION
+        )
+
+        if not QuotaService.can_consume(request.user, ActionType.GRAMMAR_GENERATION):
+            return render(
+                request,
+                self.template_name,
+                {
+                    "error": (
+                        f"Дневной лимит генераций исчерпан ({limit}/{limit}). "
+                        "Повысьте тариф до Middle или Maximum для увеличения попыток."
+                    ),
+                    "topic_name": topic_name,
+                    "remaining": 0,
+                    "limit": limit,
+                },
+            )
+
         if not topic_name:
             return render(
                 request,
                 self.template_name,
-                {"error": "Пожалуйста, введите название темы."},
+                {
+                    "error": "Пожалуйста, введите название темы.",
+                    "remaining": remaining,
+                    "limit": limit,
+                },
             )
 
         try:
             topic: Topic = create_ai_topic(topic_name, request.user)
+            QuotaService.consume(request.user, ActionType.GRAMMAR_GENERATION)
             return redirect(topic.get_absolute_url())
         except TopicNotFoundError as exc:
             return render(
                 request,
                 self.template_name,
-                {"error": str(exc), "topic_name": topic_name},
+                {
+                    "error": str(exc),
+                    "topic_name": topic_name,
+                    "remaining": remaining,
+                    "limit": limit,
+                },
             )
         except Exception as exc:
             return render(
@@ -125,5 +164,7 @@ class AddTopicView(LoginRequiredMixin, View):
                 {
                     "error": f"Произошла ошибка при генерации темы: {exc}",
                     "topic_name": topic_name,
+                    "remaining": remaining,
+                    "limit": limit,
                 },
             )

@@ -12,7 +12,11 @@ urlpatterns = [
     path("cards/", include("apps.cards.urls", namespace="cards")),
     path("grammar/", include("apps.grammar.urls", namespace="grammar")),
     path("films/", include("apps.films.urls", namespace="films")),
-    path('', include(tf_urls)),
+    path(
+        "subscriptions/",
+        include("apps.subscriptions.urls", namespace="subscriptions"),
+    ),
+    path("", include(tf_urls)),
 ]
 
 if settings.DEBUG:
@@ -23,5 +27,4 @@ if settings.DEBUG:
             serve_media_with_range,
             name="media_serve",
         ),
-
     ]

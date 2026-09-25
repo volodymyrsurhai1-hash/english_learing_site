@@ -1445,3 +1445,185 @@ a.sidebar__logo:hover .sidebar__logo-mark {
         flex-direction: column;
     }
 }
+
+.topbar__subscription {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 10px;
+    margin-right: 12px;
+    white-space: nowrap;
+}
+
+.plan-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 3px 8px;
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.plan-badge--free {
+    background: rgba(148, 163, 184, 0.15);
+    color: #94a3b8;
+    border: 1px solid rgba(148, 163, 184, 0.25);
+}
+
+.plan-badge--middle {
+    background: linear-gradient(135deg, rgba(56, 189, 248, 0.2), rgba(124, 58, 237, 0.2));
+    color: #38bdf8;
+    border: 1px solid rgba(56, 189, 248, 0.35);
+    text-shadow: 0 0 12px rgba(56, 189, 248, 0.5);
+}
+
+.plan-badge--maximum {
+    background: linear-gradient(135deg, rgba(251, 191, 36, 0.25), rgba(245, 158, 11, 0.25));
+    color: #fbbf24;
+    border: 1px solid rgba(251, 191, 36, 0.45);
+    text-shadow: 0 0 12px rgba(251, 191, 36, 0.5);
+}
+
+.plan-badge--lg {
+    padding: 6px 14px;
+    font-size: 13px;
+    border-radius: 8px;
+}
+
+.quota-indicators {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.quota-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 8px;
+    background: var(--bg-card);
+    border: 1px solid var(--border-default);
+    border-radius: 6px;
+    font-size: 12px;
+    font-family: var(--font-mono);
+    color: var(--text-secondary);
+    cursor: default;
+}
+
+.btn--upgrade-sm {
+    display: inline-flex;
+    align-items: center;
+    padding: 4px 10px;
+    background: linear-gradient(135deg, #f59e0b, #ef4444);
+    color: #fff !important;
+    font-size: 11px;
+    font-weight: 600;
+    border-radius: 6px;
+    text-decoration: none !important;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+    box-shadow: 0 2px 8px rgba(245, 158, 11, 0.3);
+}
+
+.btn--upgrade-sm:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(245, 158, 11, 0.5);
+}
+
+.profile__subscription-card {
+    margin-bottom: 24px;
+    padding: 22px;
+    background: var(--bg-card);
+    border: 1px solid var(--border-default);
+    border-radius: var(--radius-md);
+}
+
+.profile__subscription-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 16px;
+    margin-bottom: 20px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--border-muted);
+}
+
+.profile__subscription-sub {
+    display: block;
+    font-size: 12px;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    margin-bottom: 4px;
+}
+
+.profile__subscription-tier {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.profile__subscription-desc {
+    font-size: 13px;
+    color: var(--text-secondary);
+}
+
+.profile__quotas-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 16px;
+}
+
+.quota-box {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-muted);
+    border-radius: var(--radius-sm);
+    padding: 14px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.quota-box__header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-primary);
+}
+
+.quota-box__val {
+    font-family: var(--font-mono);
+    font-weight: 700;
+    color: var(--accent-blue);
+}
+
+.quota-box__max {
+    color: var(--text-muted);
+    font-weight: 400;
+}
+
+.quota-bar {
+    width: 100%;
+    height: 6px;
+    background: rgba(255, 255, 255, 0.08);
+    border-radius: 999px;
+    overflow: hidden;
+}
+
+.quota-bar__fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent-blue), var(--accent-purple));
+    border-radius: 999px;
+    transition: width 0.3s ease;
+}
+
+.quota-box__note {
+    font-size: 11px;
+    color: var(--text-muted);
+}

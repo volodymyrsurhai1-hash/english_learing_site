@@ -6,6 +6,61 @@
 {% block content %}
 <div class="profile">
 
+    <div class="profile__subscription-card">
+        <div class="profile__subscription-header">
+            <div class="profile__subscription-info">
+                <span class="profile__subscription-sub">Тарифный план</span>
+                <div class="profile__subscription-tier">
+                    <span class="plan-badge plan-badge--lg plan-badge--{{ current_plan.code|lower|default:'free' }}">
+                        {{ current_plan.name|default:"Free" }}
+                    </span>
+                    <span class="profile__subscription-desc">
+                        {% if current_plan.code == "MAXIMUM" %}
+                            Максимальный доступ ко всем возможностям платформы (50 видео и 50 тем грамматики в сутки)
+                        {% elif current_plan.code == "MIDDLE" %}
+                            Расширенный доступ для интенсивных занятий (10 видео и 15 тем грамматики в сутки)
+                        {% else %}
+                            Базовый бесплатный тариф (2 видео и 2 темы грамматики в сутки)
+                        {% endif %}
+                    </span>
+                </div>
+            </div>
+            {% if current_plan.code != "MAXIMUM" %}
+            <a href="{{ patreon_url }}" target="_blank" rel="noopener noreferrer" class="btn--upgrade-sm" style="padding: 8px 16px; font-size: 13px;">
+                ★ Улучшить на Patreon
+            </a>
+            {% else %}
+            <a href="{{ patreon_url }}" target="_blank" rel="noopener noreferrer" class="btn btn--outline-sm">
+                Управление подпиской
+            </a>
+            {% endif %}
+        </div>
+
+        <div class="profile__quotas-grid">
+            <div class="quota-box">
+                <div class="quota-box__header">
+                    <span class="quota-box__title">🎬 Скачивание видео</span>
+                    <span class="quota-box__val">{{ video_quota.remaining }} <span class="quota-box__max">/ {{ video_quota.limit }}</span></span>
+                </div>
+                <div class="quota-bar">
+                    <div class="quota-bar__fill" style="width: {% widthratio video_quota.remaining video_quota.limit 100 %}%;"></div>
+                </div>
+                <span class="quota-box__note">Доступно сегодня (сброс через 24ч с момента скачивания)</span>
+            </div>
+
+            <div class="quota-box">
+                <div class="quota-box__header">
+                    <span class="quota-box__title">📚 Генерация грамматики</span>
+                    <span class="quota-box__val">{{ grammar_quota.remaining }} <span class="quota-box__max">/ {{ grammar_quota.limit }}</span></span>
+                </div>
+                <div class="quota-bar">
+                    <div class="quota-bar__fill" style="width: {% widthratio grammar_quota.remaining grammar_quota.limit 100 %}%;"></div>
+                </div>
+                <span class="quota-box__note">Доступно сегодня (сброс через 24ч с момента генерации)</span>
+            </div>
+        </div>
+    </div>
+
     <div class="profile__stats">
         <div class="stat-card">
             <span class="stat-card__value">{{ count_all }}</span>

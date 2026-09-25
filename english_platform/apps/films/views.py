@@ -13,6 +13,9 @@ from django.http import HttpRequest, HttpResponse, JsonResponse
 from django.shortcuts import redirect
 from django.views.generic import DetailView, ListView, View
 
+
+from apps.subscriptions.models import ActionType
+from apps.subscriptions.services import QuotaService
 from apps.dictionary.services import (
     get_or_generate_word,
     is_word_saved,
@@ -24,7 +27,7 @@ from apps.films.progress import progress_tracker
 from apps.films.subtitle_parser import load_bilingual_subtitles
 
 
-def _execute_download_task(task_id: str, url: str) -> None:
+def _execute_download_task(task_id: str, url: str, user: Any = None) -> None:
     try:
         result = download_video(url, task_id=task_id)
 
@@ -59,6 +62,9 @@ def _execute_download_task(task_id: str, url: str) -> None:
             subtitle_en=en_rel,
             subtitle_ru=ru_rel,
         )
+
+        if user and user.is_authenticated:
+            QuotaService.consume(user, ActionType.VIDEO_DOWNLOAD)
 
         progress_tracker.update_task(
             task_id=task_id,
@@ -114,6 +120,13 @@ class FilmWatchView(DetailView):
 
 class FilmDownloadView(LoginRequiredMixin, View):
     def post(self, request: HttpRequest) -> HttpResponse:
+        if not QuotaService.can_consume(request.user, ActionType.VIDEO_DOWNLOAD):
+            messages.error(
+                request,
+                "Daily video download limit reached for your subscription plan.",
+            )
+            return redirect("films:list")
+
         url: str = request.POST.get("url", "").strip()
         if not url:
             messages.error(request, "YouTube URL is required.")
@@ -145,6 +158,7 @@ class FilmDownloadView(LoginRequiredMixin, View):
             subtitle_en=en_rel,
             subtitle_ru=ru_rel,
         )
+        QuotaService.consume(request.user, ActionType.VIDEO_DOWNLOAD)
         return redirect("films:watch", pk=film.pk)
 
 
@@ -154,6 +168,15 @@ class StartDownloadView(View):
             return JsonResponse(
                 {"status": "error", "message": "Authentication required"},
                 status=401,
+            )
+
+        if not QuotaService.can_consume(request.user, ActionType.VIDEO_DOWNLOAD):
+            return JsonResponse(
+                {
+                    "status": "error",
+                    "message": "Daily video download limit reached for your subscription plan.",
+                },
+                status=429,
             )
 
         try:
@@ -176,7 +199,7 @@ class StartDownloadView(View):
 
         thread = threading.Thread(
             target=_execute_download_task,
-            args=(task_id, url),
+            args=(task_id, url, request.user),
             daemon=True,
         )
         thread.start()

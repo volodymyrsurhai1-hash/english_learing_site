@@ -6,9 +6,11 @@ from .models import User
 
 class UserAdmin(BaseUserAdmin):
     ordering = ["email"]
-    list_display = ["email", "password", "is_staff", "is_active"]
+    list_display = ["email", "plan", "is_staff", "is_active"]
+    list_filter = ["is_staff", "is_active", "plan"]
     fieldsets = (
         (None, {"fields": ("email", "password")}),
+        ("Subscription", {"fields": ("plan",)}),
         (
             "Permissions",
             {
@@ -27,7 +29,14 @@ class UserAdmin(BaseUserAdmin):
             None,
             {
                 "classes": ("wide",),
-                "fields": ("email", "password1", "password2", "is_staff", "is_active"),
+                "fields": (
+                    "email",
+                    "password1",
+                    "password2",
+                    "plan",
+                    "is_staff",
+                    "is_active",
+                ),
             },
         ),
     )

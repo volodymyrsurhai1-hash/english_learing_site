@@ -10,12 +10,14 @@ load_dotenv(dotenv_path)
 
 SECRET_KEY = os.environ.get("SECRET_KEY")
 
+PATREON_WEBHOOK_SECRET: str = os.environ.get("PATREON_WEBHOOK_SECRET", "")
+
 GEMINI_API_KEY = os.environ.get("GEMINI_API")
 GEMINI_MODEL: str = os.environ.get("GEMINI_MODEL", "gemini-3.6-flash")
 
 DEBUG = True
 
-ALLOWED_HOSTS: list[str] = []
+ALLOWED_HOSTS: list[str] = ["*"] if DEBUG else []
 
 
 INSTALLED_APPS = [
@@ -31,22 +33,23 @@ INSTALLED_APPS = [
     "apps.cards.apps.CardsConfig",
     "apps.grammar.apps.GrammarConfig",
     "apps.films.apps.FilmsConfig",
-    'django_otp',
-    'django_otp.plugins.otp_email',
-    'django_otp.plugins.otp_totp',
-    'django_otp.plugins.otp_static',
-    'two_factor',
-    'two_factor.plugins.email',
+    "apps.subscriptions.apps.SubscriptionsConfig",
+    "django_otp",
+    "django_otp.plugins.otp_email",
+    "django_otp.plugins.otp_totp",
+    "django_otp.plugins.otp_static",
+    "two_factor",
+    "two_factor.plugins.email",
 ]
 
-EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = os.environ.get('EMAIL_HOST')
-EMAIL_PORT = int(os.environ.get('EMAIL_PORT', 587))
-EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER')
-EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD')
-EMAIL_USE_TLS = os.environ.get('EMAIL_USE_TLS', 'True') == 'True'
-DEFAULT_FROM_EMAIL = os.environ.get('DEFAULT_FROM_EMAIL')
-OTP_EMAIL_SENDER = os.environ.get('DEFAULT_FROM_EMAIL')
+EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+EMAIL_HOST = os.environ.get("EMAIL_HOST")
+EMAIL_PORT = int(os.environ.get("EMAIL_PORT", 587))
+EMAIL_HOST_USER = os.environ.get("EMAIL_HOST_USER")
+EMAIL_HOST_PASSWORD = os.environ.get("EMAIL_HOST_PASSWORD")
+EMAIL_USE_TLS = os.environ.get("EMAIL_USE_TLS", "True") == "True"
+DEFAULT_FROM_EMAIL = os.environ.get("DEFAULT_FROM_EMAIL")
+OTP_EMAIL_SENDER = os.environ.get("DEFAULT_FROM_EMAIL")
 
 
 MIDDLEWARE = [
@@ -57,8 +60,8 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
-    'django_otp.middleware.OTPMiddleware',
-    'apps.core.middleware.EnforceOTPMiddleware',
+    "django_otp.middleware.OTPMiddleware",
+    "apps.core.middleware.EnforceOTPMiddleware",
 ]
 
 ROOT_URLCONF = "config.urls"
@@ -73,6 +76,7 @@ TEMPLATES = [
                 "django.template.context_processors.request",
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
+                "apps.subscriptions.context_processors.subscription_context",
             ],
         },
     },
@@ -95,7 +99,7 @@ DATABASES = {
 AUTH_USER_MODEL = "users.User"
 LOGIN_REDIRECT_URL = "dictionary:search"
 LOGOUT_REDIRECT_URL = "dictionary:search"
-LOGIN_URL = 'two_factor:login'
+LOGIN_URL = "two_factor:login"
 
 AUTH_PASSWORD_VALIDATORS = [
     {

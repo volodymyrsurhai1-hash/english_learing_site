@@ -15,7 +15,11 @@ def register(request: HttpRequest) -> HttpResponse:
     if request.method == "POST":
         form = RegisterForm(request.POST)
         if form.is_valid():
-            user = form.save()
+            user = form.save(commit=False)
+            from apps.subscriptions.models import Plan
+
+            user.plan = Plan.objects.filter(code="FREE").first()
+            user.save()
             EmailDevice.objects.create(
                 user=user,
                 name="default",

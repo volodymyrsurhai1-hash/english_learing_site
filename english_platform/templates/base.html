@@ -11,7 +11,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet">
 
-    <link rel="stylesheet" href="{% static 'css/style.css' %}?v=3">
+    <link rel="stylesheet" href="{% static 'css/style.css' %}?v=5">
     {% block extra_css %}{% endblock %}
 </head>
 <body class="body">
@@ -72,6 +72,24 @@
                 <div class="topbar__actions">
                     {% block topbar_actions %}{% endblock %}
                     {% if user.is_authenticated %}
+                    <div class="topbar__subscription">
+                        <span class="plan-badge plan-badge--{{ current_plan.code|lower|default:'free' }}">
+                            {{ current_plan.name|default:"Free" }}
+                        </span>
+                        <div class="quota-indicators">
+                            <span class="quota-tag" title="Скачивания видео сегодня: осталось {{ video_quota.remaining }} из {{ video_quota.limit }}">
+                                🎬 {{ video_quota.remaining }}/{{ video_quota.limit }}
+                            </span>
+                            <span class="quota-tag" title="Темы грамматики сегодня: осталось {{ grammar_quota.remaining }} из {{ grammar_quota.limit }}">
+                                📚 {{ grammar_quota.remaining }}/{{ grammar_quota.limit }}
+                            </span>
+                        </div>
+                        {% if current_plan.code != "MAXIMUM" %}
+                        <a href="{{ patreon_url }}" target="_blank" rel="noopener noreferrer" class="btn--upgrade-sm" title="Улучшить тариф на Patreon">
+                            ★ Улучшить
+                        </a>
+                        {% endif %}
+                    </div>
                     <div class="topbar__user">
                         <div class="topbar__user-chip">
                             <span class="topbar__user-avatar">{{ user.email|slice:":1"|upper }}</span>
