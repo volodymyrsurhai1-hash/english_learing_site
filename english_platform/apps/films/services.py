@@ -1,5 +1,7 @@
 import os
 from pathlib import Path
+import shutil
+import tempfile
 from typing import Any
 
 from django.conf import settings
@@ -15,20 +17,21 @@ class YtDlpDownloader(VideoDownloader):
         self._ensure_environment_path()
 
     def _ensure_environment_path(self) -> None:
-        persistent_path = (
-            os.environ.get("Path", "")
-            + ";"
-            + (
-                os.getenv("LOCALAPPDATA", "")
-                + r"\Microsoft\WinGet\Packages\DenoLand.Deno_Microsoft.Winget.Source_8wekyb3d8bbwe"
+        if os.name == "nt":
+            persistent_path = (
+                os.environ.get("PATH", "")
+                + ";"
+                + (
+                    os.getenv("LOCALAPPDATA", "")
+                    + r"\Microsoft\WinGet\Packages\DenoLand.Deno_Microsoft.Winget.Source_8wekyb3d8bbwe"
+                )
+                + ";"
+                + (
+                    os.getenv("LOCALAPPDATA", "")
+                    + r"\Microsoft\WinGet\Packages\Gyan.FFmpeg_Microsoft.Winget.Source_8wekyb3d8bbwe\ffmpeg-9.0.2-full_build\bin"
+                )
             )
-            + ";"
-            + (
-                os.getenv("LOCALAPPDATA", "")
-                + r"\Microsoft\WinGet\Packages\Gyan.FFmpeg_Microsoft.Winget.Source_8wekyb3d8bbwe\ffmpeg-9.0.2-full_build\bin"
-            )
-        )
-        os.environ["PATH"] = persistent_path
+            os.environ["PATH"] = persistent_path
 
     def _create_progress_hook(self, task_id: str) -> Any:
         def hook(d: dict[str, Any]) -> None:
@@ -84,7 +87,6 @@ class YtDlpDownloader(VideoDownloader):
             "ignoreerrors": True,
             "windowsfilenames": True,
             "postprocessor_args": {"ffmpeg": ["-movflags", "+faststart"]},
-            "extractor_args": {"youtube": {"player_client": ["ios", "web", "mweb"]}},
         }
 
         cookie_candidates: list[str] = [
@@ -95,10 +97,22 @@ class YtDlpDownloader(VideoDownloader):
             str(Path(settings.BASE_DIR).parent / "cookies.txt"),
             str(Path(settings.MEDIA_ROOT) / "cookies.txt"),
         ]
+        has_cookies: bool = False
         for candidate in cookie_candidates:
             if candidate and Path(candidate).is_file():
-                opts["cookiefile"] = candidate
+                tmp_cookie: Path = Path(tempfile.gettempdir()) / "yt_cookies.txt"
+                try:
+                    shutil.copy2(candidate, tmp_cookie)
+                    opts["cookiefile"] = str(tmp_cookie)
+                except Exception:
+                    opts["cookiefile"] = candidate
+                has_cookies = True
                 break
+
+        if not has_cookies:
+            opts["extractor_args"] = {
+                "youtube": {"player_client": ["ios", "web", "mweb"]}
+            }
 
         proxy: str = os.environ.get("YOUTUBE_PROXY", "")
         if proxy:
