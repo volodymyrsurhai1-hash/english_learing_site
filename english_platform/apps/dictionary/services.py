@@ -12,6 +12,10 @@ class WordNotFoundError(Exception):
     pass
 
 
+class AIServiceUnavailableError(Exception):
+    pass
+
+
 def validate_query(query: str) -> Optional[str]:
     if not query:
         return "Введите слово или выражение."
@@ -29,7 +33,13 @@ def get_or_generate_word(query: str) -> dict[str, Any]:
     if word is not None:
         return word.full_translation
 
-    result: dict[str, Any] = generate_and_export_dict(normalized)
+    try:
+        result: dict[str, Any] = generate_and_export_dict(normalized)
+    except Exception as exc:
+        logger.error("AI generation failed after retries for %s: %s", normalized, exc)
+        raise AIServiceUnavailableError(
+            "Сервис генерации временно перегружен. Пожалуйста, попробуйте еще раз через несколько секунд."
+        ) from exc
 
     if not result.get("is_valid", True):
         raise WordNotFoundError(

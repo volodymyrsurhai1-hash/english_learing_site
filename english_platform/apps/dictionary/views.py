@@ -13,6 +13,7 @@ from apps.dictionary.services import (
     save_word_for_user,
     toggle_word_status,
     validate_query,
+    AIServiceUnavailableError,
     WordNotFoundError,
 )
 from apps.dictionary.models import Word
@@ -40,6 +41,12 @@ class SearchView(TemplateView):
                         context["is_saved"] = False
                 except WordNotFoundError as exc:
                     context["error"] = str(exc)
+                except AIServiceUnavailableError as exc:
+                    context["error"] = str(exc)
+                except Exception:
+                    context["error"] = (
+                        "Произошла ошибка при обработке запроса. Пожалуйста, попробуйте позже."
+                    )
 
         return context
 

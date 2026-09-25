@@ -6,6 +6,12 @@ from google.genai import types
 from pydantic import BaseModel, Field
 
 from apps.core.ai import get_ai_client
+from tenacity import (
+    retry,
+    retry_if_exception_type,
+    stop_after_attempt,
+    wait_exponential,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -135,6 +141,11 @@ class LinguisticAnalysis(BaseModel):
 # ── Интерфейс ────────────────────────────────────
 
 
+@retry(
+    stop=stop_after_attempt(3),
+    wait=wait_exponential(multiplier=1, min=1, max=4),
+    reraise=True,
+)
 def analyze(query: str) -> LinguisticAnalysis:
     client = get_ai_client()
 
