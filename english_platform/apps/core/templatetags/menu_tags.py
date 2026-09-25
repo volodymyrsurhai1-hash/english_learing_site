@@ -14,7 +14,7 @@ MENU_ITEMS: list[dict[str, str]] = [
     {"title": "Словарь", "url_name": "dictionary:search", "icon": "📖"},
     {"title": "Грамматика", "url_name": "grammar:list", "icon": "📚"},
     {"title": "Карточки", "url_name": "cards:index", "icon": "🃏"},
-    {"title": "Кино", "url_name": "films:list", "icon": "🎬"},
+    {"title": "Видеопрактика", "url_name": "films:list", "icon": "🎬"},
     {"title": "Профиль", "url_name": "profile", "icon": "👤"},
 ]
 

@@ -1,5 +1,6 @@
 from typing import Any
 
+from django.contrib import messages
 from django.contrib.auth import login
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.http import HttpRequest, HttpResponse
@@ -25,6 +26,10 @@ def register(request: HttpRequest) -> HttpResponse:
                 name="default",
                 email=user.email,
                 confirmed=True,
+            )
+            messages.success(
+                request,
+                "Вы успешно зарегистрировались! Теперь вы можете войти в аккаунт.",
             )
             return redirect("two_factor:login")
     else:

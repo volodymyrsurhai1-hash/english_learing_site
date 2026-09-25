@@ -1,17 +1,17 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block title %}{{ film.title }} | English Platform{% endblock %}
+{% block title %}{{ film.title }} | VSeng{% endblock %}
 {% block page_title %}🎬 {{ film.title }}{% endblock %}
 
 {% block extra_css %}
-<link rel="stylesheet" href="{% static 'css/films.css' %}">
+<link rel="stylesheet" href="{% static 'css/films.css' %}?v=2">
 {% endblock %}
 
 {% block content %}
 <div class="film-watch-container">
     <div class="film-watch-topbar">
-        <a href="{% url 'films:list' %}" class="btn btn--outline-sm">← All Films</a>
+        <a href="{% url 'films:list' %}" class="btn btn--outline-sm">← Все видео</a>
         <span class="film-watch-title">{{ film.title }}</span>
     </div>
 

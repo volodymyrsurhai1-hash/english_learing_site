@@ -12,7 +12,12 @@ SECRET_KEY = os.environ.get("SECRET_KEY")
 
 PATREON_WEBHOOK_SECRET: str = os.environ.get("PATREON_WEBHOOK_SECRET", "")
 
-GEMINI_API_KEY = os.environ.get("GEMINI_API")
+AI_PROVIDER: str = os.environ.get("AI_PROVIDER", "openai").lower()
+
+OPENAI_API_KEY: str = os.environ.get("OPENAI_API_KEY", "")
+OPENAI_MODEL: str = os.environ.get("OPENAI_MODEL", "gpt-4o-mini")
+
+GEMINI_API_KEY: str = os.environ.get("GEMINI_API", "")
 GEMINI_MODEL: str = os.environ.get("GEMINI_MODEL", "gemini-3.6-flash")
 
 DEBUG: bool = os.environ.get("DEBUG", "False").lower() in ("true", "1", "yes")

@@ -1,26 +1,47 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block title %}🎬 Films | English Platform{% endblock %}
-{% block page_title %}🎬 Films{% endblock %}
+{% block title %}🎬 Видеопрактика | VSeng{% endblock %}
+{% block page_title %}🎬 Видеопрактика{% endblock %}
 
 {% block extra_css %}
-<link rel="stylesheet" href="{% static 'css/films.css' %}">
+<link rel="stylesheet" href="{% static 'css/films.css' %}?v=2">
 {% endblock %}
 
 {% block content %}
-{% if messages %}
-<div style="margin-bottom: 20px;">
-    {% for message in messages %}
-    <div class="card dictionary__error">
-        <span class="dictionary__error-icon">⚠️</span>
-        <p class="dictionary__error-text">{{ message }}</p>
+<div class="video-intro-card">
+    <div class="video-intro-card__header">
+        <div class="video-intro-card__icon">🎬</div>
+        <div class="video-intro-card__info">
+            <h2 class="video-intro-card__title">Изучайте живой английский по видео и фильмам</h2>
+            <p class="video-intro-card__desc">Смотрите видео с синхронными умными субтитрами, прокачивайте восприятие речи на слух и пополняйте словарный запас в реальном контексте.</p>
+        </div>
     </div>
-    {% endfor %}
+    <div class="video-intro-features">
+        <div class="video-intro-feature">
+            <span class="video-intro-feature__icon">💬</span>
+            <div class="video-intro-feature__content">
+                <span class="video-intro-feature__title">Двуязычные субтитры</span>
+                <span class="video-intro-feature__desc">Синхронный английский и русский текст для легкого восприятия на слух.</span>
+            </div>
+        </div>
+        <div class="video-intro-feature">
+            <span class="video-intro-feature__icon">⚡</span>
+            <div class="video-intro-feature__content">
+                <span class="video-intro-feature__title">Перевод в один клик</span>
+                <span class="video-intro-feature__desc">Кликайте на любое слово в субтитрах для моментального разбора и транскрипции.</span>
+            </div>
+        </div>
+        <div class="video-intro-feature">
+            <span class="video-intro-feature__icon">🃏</span>
+            <div class="video-intro-feature__content">
+                <span class="video-intro-feature__title">Сохранение в карточки</span>
+                <span class="video-intro-feature__desc">Сохраняйте новые слова прямо из видео в личный словарь и тренируйте их в интервальных карточках.</span>
+            </div>
+        </div>
+    </div>
 </div>
-{% endif %}
 
-{% if user.is_authenticated %}
 <div class="film-download-form">
     <form id="film-download-form" method="post" action="{% url 'films:download' %}">
         {% csrf_token %}
@@ -29,17 +50,17 @@
             class="dictionary__input"
             type="url"
             name="url"
-            placeholder="YouTube URL..."
+            placeholder="Вставьте ссылку на YouTube (видео, подкаст, трейлер)..."
             required
             autocomplete="off"
         >
-        <button id="film-download-btn" class="dictionary__btn" type="submit">Download</button>
+        <button id="film-download-btn" class="dictionary__btn" type="submit">Скачать видео</button>
     </form>
 </div>
 
 <div id="download-progress-card" class="card download-progress-card" style="display: none;">
     <div class="download-progress-header">
-        <span id="download-progress-status" class="download-progress-status">Starting download...</span>
+        <span id="download-progress-status" class="download-progress-status">Подготовка к загрузке...</span>
         <span id="download-progress-percent" class="download-progress-percent font-mono">0.0%</span>
     </div>
     <div class="download-progress-bar">
@@ -51,21 +72,20 @@
     </div>
     <div id="download-progress-error" class="download-progress-error" style="display: none;"></div>
 </div>
-{% endif %}
 
 {% if films %}
 <div class="film-grid">
     {% for film in films %}
     <a href="{% url 'films:watch' film.pk %}" class="film-card">
         <div class="film-card__title">{{ film.title }}</div>
-        <div class="film-card__date">{{ film.created_at|date:"M d, Y" }}</div>
-        <span class="film-card__link">Watch →</span>
+        <div class="film-card__date">{{ film.created_at|date:"d.m.Y" }}</div>
+        <span class="film-card__link">Смотреть и учить →</span>
     </a>
     {% endfor %}
 </div>
 {% else %}
 <div class="dictionary__empty">
-    <p>No films yet. Paste a YouTube URL above to download your first video.</p>
+    <p>Пока нет добавленных видео. Вставьте ссылку на YouTube выше, чтобы начать видеопрактику.</p>
 </div>
 {% endif %}
 {% endblock %}

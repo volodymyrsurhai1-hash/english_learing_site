@@ -85,13 +85,13 @@ def _execute_download_task(task_id: str, url: str, user: Any = None) -> None:
         connection.close()
 
 
-class FilmListView(ListView):
+class FilmListView(LoginRequiredMixin, ListView):
     model = Film
     template_name = "films/film_list.html"
     context_object_name = "films"
 
 
-class FilmWatchView(DetailView):
+class FilmWatchView(LoginRequiredMixin, DetailView):
     model = Film
     template_name = "films/film_watch.html"
 
@@ -231,6 +231,9 @@ class DownloadProgressView(View):
 
 class TranslateWordView(View):
     def get(self, request: HttpRequest) -> JsonResponse:
+        if not request.user.is_authenticated:
+            return JsonResponse({"error": "Authentication required"}, status=401)
+
         raw_word: str = request.GET.get("word", "").strip()
 
         if (

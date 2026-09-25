@@ -1,24 +1,16 @@
 import logging
-from typing import Literal, Optional, cast
+from typing import Any, Literal, Optional
 
-from django.conf import settings
-from google.genai import types
 from pydantic import BaseModel, Field
 
-from apps.core.ai import get_ai_client
+from apps.core.ai import get_llm_provider
 from tenacity import (
     retry,
-    retry_if_exception_type,
     stop_after_attempt,
     wait_exponential,
 )
 
 logger = logging.getLogger(__name__)
-
-MODEL: str = getattr(settings, "GEMINI_MODEL", "gemini-3.6-flash")
-
-
-# ── Схемы Pydantic ────────────────────────────────────
 
 
 class Example(BaseModel):
@@ -138,18 +130,14 @@ class LinguisticAnalysis(BaseModel):
     )
 
 
-# ── Интерфейс ────────────────────────────────────
-
-
 @retry(
     stop=stop_after_attempt(3),
     wait=wait_exponential(multiplier=1, min=1, max=4),
     reraise=True,
 )
 def analyze(query: str) -> LinguisticAnalysis:
-    client = get_ai_client()
-
-    prompt = f"""
+    provider = get_llm_provider()
+    prompt: str = f"""
 Проанализируй английское слово или выражение: "{query}".
 Определи: это отдельное слово ('word') или конструкция/фразовый глагол/идиома ('construction').
 Это ОЧЕНЬ ВАЖНО:
@@ -157,22 +145,9 @@ def analyze(query: str) -> LinguisticAnalysis:
 - Если конструкция ('construction') — ОБЯЗАТЕЛЬНО заполни поле uses (все её применения) и слоты.
 К каждому значению/применению добавь по 2-3 живых примера.
 """
-    response = client.models.generate_content(
-        model=MODEL,
-        contents=prompt,
-        config=types.GenerateContentConfig(
-            response_mime_type="application/json",
-            response_schema=LinguisticAnalysis,
-            automatic_function_calling=types.AutomaticFunctionCallingConfig(
-                disable=True
-            ),
-        ),
-    )
-    if isinstance(response.parsed, LinguisticAnalysis):
-        return response.parsed
-    return cast(LinguisticAnalysis, response.parsed)
+    return provider.generate_structured(prompt, LinguisticAnalysis)
 
 
-def generate_and_export_dict(query: str) -> dict:
-    analysis = analyze(query)
+def generate_and_export_dict(query: str) -> dict[str, Any]:
+    analysis: LinguisticAnalysis = analyze(query)
     return analysis.model_dump()

@@ -1,15 +1,11 @@
 import logging
-from typing import Any, Literal, cast
+from typing import Any, Literal
 
-from django.conf import settings
-from google.genai import types
 from pydantic import BaseModel, Field
 
-from apps.core.ai import get_ai_client
+from apps.core.ai import get_llm_provider
 
 logger = logging.getLogger(__name__)
-
-MODEL: str = getattr(settings, "GEMINI_MODEL", "gemini-3.6-flash")
 
 
 class Example(BaseModel):
@@ -78,8 +74,7 @@ class GrammarTopicAnalysis(BaseModel):
 
 
 def generate_grammar_topic(query: str) -> GrammarTopicAnalysis:
-    client = get_ai_client()
-
+    provider = get_llm_provider()
     prompt: str = f"""
 Составь подробный, структурированный учебный конспект по английской грамматике для темы: "{query}".
 Определи, является ли это реальным грамматическим правилом английского языка:
@@ -87,22 +82,7 @@ def generate_grammar_topic(query: str) -> GrammarTopicAnalysis:
 - Если да — верни is_valid=true и заполни все поля конспекта.
 Сделай объяснение максимально живым, доступным и понятным, с практическими примерами и формулами.
 """
-
-    response = client.models.generate_content(
-        model=MODEL,
-        contents=prompt,
-        config=types.GenerateContentConfig(
-            response_mime_type="application/json",
-            response_schema=GrammarTopicAnalysis,
-            automatic_function_calling=types.AutomaticFunctionCallingConfig(
-                disable=True
-            ),
-        ),
-    )
-
-    if isinstance(response.parsed, GrammarTopicAnalysis):
-        return response.parsed
-    return cast(GrammarTopicAnalysis, response.parsed)
+    return provider.generate_structured(prompt, GrammarTopicAnalysis)
 
 
 def generate_and_export_topic(query: str) -> dict[str, Any]:

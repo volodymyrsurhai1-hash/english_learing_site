@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 34 34" fill="none">
+    <rect width="34" height="34" rx="8" fill="url(#vs-bg)" stroke="url(#vs-border)" stroke-width="1.5"/>
+    <path d="M7.5 10.5L12.5 22.5L17.5 10.5" stroke="url(#vs-v-grad)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M26.5 12C26.5 11 25.5 10 23.5 10C21 10 20 11.2 20 12.8C20 15 22.2 15.8 24.5 16.5C26.8 17.2 27 18.5 27 20C27 22 25.5 23 23.5 23C21.2 23 20 21.8 20 20.8" stroke="url(#vs-s-grad)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+    <defs>
+        <linearGradient id="vs-bg" x1="0" y1="0" x2="34" y2="34" gradientUnits="userSpaceOnUse">
+            <stop stop-color="#141c2e"/>
+            <stop offset="1" stop-color="#0a0d14"/>
+        </linearGradient>
+        <linearGradient id="vs-border" x1="0" y1="0" x2="34" y2="34" gradientUnits="userSpaceOnUse">
+            <stop stop-color="#58a6ff" stop-opacity="0.6"/>
+            <stop offset="1" stop-color="#bc8cff" stop-opacity="0.4"/>
+        </linearGradient>
+        <linearGradient id="vs-v-grad" x1="7.5" y1="10.5" x2="17.5" y2="22.5" gradientUnits="userSpaceOnUse">
+            <stop stop-color="#38bdf8"/>
+            <stop offset="1" stop-color="#60a5fa"/>
+        </linearGradient>
+        <linearGradient id="vs-s-grad" x1="20" y1="10" x2="27" y2="23" gradientUnits="userSpaceOnUse">
+            <stop stop-color="#c084fc"/>
+            <stop offset="1" stop-color="#e879f9"/>
+        </linearGradient>
+    </defs>
+</svg>

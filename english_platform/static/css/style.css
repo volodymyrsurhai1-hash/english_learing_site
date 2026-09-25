@@ -52,6 +52,8 @@ html {
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     scroll-behavior: smooth;
+    overflow-x: hidden;
+    max-width: 100%;
 }
 
 body {
@@ -64,6 +66,9 @@ body {
         radial-gradient(at 0% 0%, rgba(37, 99, 235, 0.08) 0px, transparent 50%),
         radial-gradient(at 100% 100%, rgba(124, 58, 237, 0.06) 0px, transparent 50%);
     background-attachment: fixed;
+    overflow-x: hidden;
+    max-width: 100%;
+    width: 100%;
 }
 
 a {
@@ -79,6 +84,9 @@ a {
 .layout {
     display: flex;
     min-height: 100vh;
+    width: 100%;
+    max-width: 100%;
+    overflow-x: hidden;
 }
 
 .sidebar {
@@ -226,6 +234,10 @@ a.sidebar__logo:hover .sidebar__logo-mark {
     display: flex;
     flex-direction: column;
     min-height: 100vh;
+    min-width: 0;
+    width: 100%;
+    max-width: 100%;
+    overflow-x: hidden;
 }
 
 .topbar {
@@ -241,12 +253,16 @@ a.sidebar__logo:hover .sidebar__logo-mark {
     backdrop-filter: blur(16px);
     -webkit-backdrop-filter: blur(16px);
     z-index: 50;
+    max-width: 100%;
+    box-sizing: border-box;
 }
 
 .topbar__left {
     display: flex;
     align-items: center;
     gap: 16px;
+    min-width: 0;
+    flex-shrink: 1;
 }
 
 .topbar__burger {
@@ -259,6 +275,7 @@ a.sidebar__logo:hover .sidebar__logo-mark {
     border-radius: var(--radius-sm);
     cursor: pointer;
     transition: background 0.15s ease, border-color 0.15s ease;
+    flex-shrink: 0;
 }
 
 .topbar__burger:hover {
@@ -271,12 +288,17 @@ a.sidebar__logo:hover .sidebar__logo-mark {
     font-weight: 700;
     letter-spacing: -0.02em;
     color: var(--text-primary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .topbar__actions {
     display: flex;
     align-items: center;
     gap: 14px;
+    flex-shrink: 0;
+    min-width: 0;
 }
 
 .topbar__user {
@@ -293,6 +315,14 @@ a.sidebar__logo:hover .sidebar__logo-mark {
     background: rgba(255, 255, 255, 0.04);
     border: 1px solid var(--border-default);
     border-radius: 999px;
+    text-decoration: none !important;
+    color: inherit !important;
+    transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.topbar__user-chip:hover {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: var(--border-highlight);
 }
 
 .topbar__user-avatar {
@@ -307,12 +337,17 @@ a.sidebar__logo:hover .sidebar__logo-mark {
     align-items: center;
     justify-content: center;
     user-select: none;
+    flex-shrink: 0;
 }
 
 .topbar__user-email {
     font-size: 13px;
     color: var(--text-secondary);
     font-weight: 500;
+    max-width: 180px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .topbar__auth {
@@ -1412,11 +1447,60 @@ a.sidebar__logo:hover .sidebar__logo-mark {
     }
 
     .topbar {
-        padding: 14px 20px;
+        padding: 10px 14px;
+        gap: 8px;
+    }
+
+    .topbar__left {
+        gap: 10px;
+    }
+
+    .topbar__title {
+        font-size: 16px;
+        max-width: 120px;
+    }
+
+    .topbar__actions {
+        gap: 8px;
+    }
+
+    .topbar__subscription {
+        margin-right: 0;
+        gap: 6px;
+    }
+
+    .quota-indicators {
+        display: none !important;
+    }
+
+    .btn--upgrade-sm {
+        display: none !important;
+    }
+
+    .topbar__user {
+        gap: 8px;
+    }
+
+    .topbar__user-chip {
+        padding: 0;
+        background: transparent;
+        border: none;
+    }
+
+    .topbar__user-email {
+        display: none !important;
+    }
+
+    .topbar__logout-form .btn {
+        padding: 5px 10px;
+        font-size: 12px;
     }
 
     .content {
-        padding: 20px 16px;
+        padding: 16px 14px;
+        width: 100%;
+        max-width: 100%;
+        box-sizing: border-box;
     }
 
     .dictionary__search {
@@ -1433,6 +1517,28 @@ a.sidebar__logo:hover .sidebar__logo-mark {
 
     .word-grid {
         grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 480px) {
+    .topbar__title {
+        font-size: 15px;
+        max-width: 90px;
+    }
+
+    .topbar__actions {
+        gap: 6px;
+    }
+
+    .plan-badge {
+        font-size: 10px;
+        padding: 2px 6px;
+    }
+
+    .topbar__user-avatar {
+        width: 24px;
+        height: 24px;
+        font-size: 11px;
     }
 }
 
@@ -1627,3 +1733,94 @@ a.sidebar__logo:hover .sidebar__logo-mark {
     font-size: 11px;
     color: var(--text-muted);
 }
+
+.messages-container {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 24px;
+    width: 100%;
+}
+
+.alert {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 18px;
+    border-radius: var(--radius-md);
+    background: var(--bg-card);
+    border: 1px solid var(--border-default);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    font-size: 14px;
+    box-shadow: var(--shadow-sm);
+    animation: alertFadeIn 0.3s ease;
+}
+
+.alert--success {
+    background: rgba(52, 211, 153, 0.12);
+    border-color: rgba(52, 211, 153, 0.35);
+    color: #34d399;
+}
+
+.alert--error {
+    background: rgba(248, 113, 113, 0.12);
+    border-color: rgba(248, 113, 113, 0.35);
+    color: #f87171;
+}
+
+.alert--warning {
+    background: rgba(251, 191, 36, 0.12);
+    border-color: rgba(251, 191, 36, 0.35);
+    color: #fbbf24;
+}
+
+.alert--info {
+    background: rgba(56, 189, 248, 0.12);
+    border-color: rgba(56, 189, 248, 0.35);
+    color: #38bdf8;
+}
+
+.alert__icon {
+    font-size: 16px;
+    font-weight: 700;
+    flex-shrink: 0;
+    line-height: 1;
+}
+
+.alert__message {
+    flex: 1;
+    color: var(--text-primary);
+    line-height: 1.4;
+    word-break: break-word;
+}
+
+.alert__close {
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    font-size: 20px;
+    line-height: 1;
+    cursor: pointer;
+    padding: 0 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: color 0.15s ease;
+}
+
+.alert__close:hover {
+    color: var(--text-primary);
+}
+
+@keyframes alertFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-8px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
