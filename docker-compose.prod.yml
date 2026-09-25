@@ -24,6 +24,7 @@ services:
     volumes:
       - static_data:/app/english_platform/staticfiles
       - media_data:/app/english_platform/media
+      - ./cookies:/app/cookies:ro
     depends_on:
       - db
     expose:

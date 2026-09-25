@@ -2,6 +2,7 @@ import os
 from pathlib import Path
 from typing import Any
 
+from django.conf import settings
 import yt_dlp
 
 from apps.films.dataclasses import DownloadConfig, DownloadResult, SubtitleConfig
@@ -83,8 +84,25 @@ class YtDlpDownloader(VideoDownloader):
             "ignoreerrors": True,
             "windowsfilenames": True,
             "postprocessor_args": {"ffmpeg": ["-movflags", "+faststart"]},
-            "extractor_args": {"youtube": {"client": ["android", "web"]}},
+            "extractor_args": {"youtube": {"player_client": ["ios", "web", "mweb"]}},
         }
+
+        cookie_candidates: list[str] = [
+            os.environ.get("YOUTUBE_COOKIES_PATH", ""),
+            "/app/cookies/cookies.txt",
+            "/app/cookies/youtube.txt",
+            str(Path(settings.BASE_DIR) / "cookies.txt"),
+            str(Path(settings.BASE_DIR).parent / "cookies.txt"),
+            str(Path(settings.MEDIA_ROOT) / "cookies.txt"),
+        ]
+        for candidate in cookie_candidates:
+            if candidate and Path(candidate).is_file():
+                opts["cookiefile"] = candidate
+                break
+
+        proxy: str = os.environ.get("YOUTUBE_PROXY", "")
+        if proxy:
+            opts["proxy"] = proxy
 
         if config.task_id is not None:
             opts["progress_hooks"] = [self._create_progress_hook(config.task_id)]
