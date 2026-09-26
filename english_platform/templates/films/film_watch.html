@@ -126,6 +126,11 @@
             return;
         }
 
+        if (e.key === "Escape") {
+            closeWordPopup();
+            return;
+        }
+
         if (e.key === "ArrowRight" || e.key === "l" || e.key === "L") {
             e.preventDefault();
             const maxTime = video.duration || video.currentTime + 5;
@@ -168,6 +173,7 @@
         }
 
         if (matchedIdx !== currentSubIdx) {
+            closeWordPopup();
             currentSubIdx = matchedIdx;
             if (matchedIdx !== -1) {
                 renderSub(subtitles[matchedIdx]);
@@ -188,6 +194,7 @@
     }
 
     video.addEventListener('play', function () {
+        closeWordPopup();
         if (syncAnimFrame) {
             cancelAnimationFrame(syncAnimFrame);
         }
@@ -201,7 +208,10 @@
         }
     });
 
-    video.addEventListener('seeked', checkSubtitles);
+    video.addEventListener('seeked', function () {
+        closeWordPopup();
+        checkSubtitles();
+    });
     video.addEventListener('timeupdate', checkSubtitles);
 
     function cleanWord(raw) {
@@ -245,51 +255,108 @@
         return row ? row.split('=')[1] : '';
     }
 
-    function onWordClick(e) {
-        e.stopPropagation();
-        video.pause();
-
-        const word = e.currentTarget.getAttribute('data-word');
-        if (!word) {
-            return;
-        }
-
-        document.querySelectorAll('.subtitle-word--active').forEach(function (el) {
-            el.classList.remove('subtitle-word--active');
-        });
-        e.currentTarget.classList.add('subtitle-word--active');
-
+    function closeWordPopup() {
         if (popupEl) {
             popupEl.remove();
             popupEl = null;
         }
+        document.querySelectorAll('.subtitle-word--active').forEach(function (el) {
+            el.classList.remove('subtitle-word--active');
+        });
+    }
 
-        const rect = e.currentTarget.getBoundingClientRect();
+    function positionWordPopup(targetEl, popup) {
+        if (!targetEl || !popup) {
+            return;
+        }
+        const rect = targetEl.getBoundingClientRect();
+        const popupWidth = popup.offsetWidth || 380;
+        const popupHeight = popup.offsetHeight || 280;
+        const viewportWidth = window.innerWidth;
+        const viewportHeight = window.innerHeight;
+
+        let left = rect.left + (rect.width / 2) - (popupWidth / 2) + window.scrollX;
+        const minLeft = 12 + window.scrollX;
+        const maxLeft = viewportWidth - popupWidth - 12 + window.scrollX;
+        left = Math.max(minLeft, Math.min(left, maxLeft));
+
+        let top = rect.bottom + 10 + window.scrollY;
+        if (rect.bottom + popupHeight + 20 > viewportHeight) {
+            const spaceAbove = rect.top;
+            if (spaceAbove > popupHeight + 20) {
+                top = rect.top - popupHeight - 10 + window.scrollY;
+            } else {
+                top = Math.max(10 + window.scrollY, ((viewportHeight - popupHeight) / 2) + window.scrollY);
+            }
+        }
+
+        popup.style.left = Math.round(left) + 'px';
+        popup.style.top = Math.round(top) + 'px';
+    }
+
+    function onWordClick(e) {
+        e.stopPropagation();
+        video.pause();
+
+        const targetEl = e.currentTarget;
+        const word = targetEl.getAttribute('data-word');
+        if (!word) {
+            return;
+        }
+
+        const wasActive = targetEl.classList.contains('subtitle-word--active');
+        closeWordPopup();
+        if (wasActive) {
+            return;
+        }
+
+        targetEl.classList.add('subtitle-word--active');
+
         popupEl = document.createElement('div');
         popupEl.className = 'word-popup';
-
-        let popupLeft = rect.left + window.scrollX;
-        if (popupLeft + 310 > window.innerWidth) {
-            popupLeft = Math.max(10, window.innerWidth - 320);
-        }
-        popupEl.style.left = popupLeft + 'px';
-        popupEl.style.top = (rect.bottom + window.scrollY + 10) + 'px';
 
         const headerEl = document.createElement('div');
         headerEl.className = 'word-popup__header';
 
-        const titleEl = document.createElement('div');
+        const titleRow = document.createElement('div');
+        titleRow.className = 'word-popup__title-row';
+
+        const titleWrap = document.createElement('div');
+        titleWrap.className = 'word-popup__title-wrap';
+
+        const titleEl = document.createElement('h3');
         titleEl.className = 'word-popup__word';
         titleEl.textContent = word;
-        headerEl.appendChild(titleEl);
+        titleWrap.appendChild(titleEl);
+
+        titleRow.appendChild(titleWrap);
+
+        const closeBtn = document.createElement('button');
+        closeBtn.type = 'button';
+        closeBtn.className = 'word-popup__close-btn';
+        closeBtn.innerHTML = '&times;';
+        closeBtn.setAttribute('aria-label', 'Close');
+        closeBtn.addEventListener('click', function (ev) {
+            ev.stopPropagation();
+            closeWordPopup();
+        });
+        titleRow.appendChild(closeBtn);
+        headerEl.appendChild(titleRow);
+
         popupEl.appendChild(headerEl);
 
         const statusEl = document.createElement('div');
         statusEl.className = 'word-popup__loading';
-        statusEl.textContent = 'Looking up...';
+        const spinner = document.createElement('div');
+        spinner.className = 'word-popup__spinner';
+        statusEl.appendChild(spinner);
+        const statusText = document.createElement('span');
+        statusText.textContent = 'Looking up...';
+        statusEl.appendChild(statusText);
         popupEl.appendChild(statusEl);
 
         document.body.appendChild(popupEl);
+        positionWordPopup(targetEl, popupEl);
 
         fetch('/films/api/translate/?word=' + encodeURIComponent(word))
             .then(function (res) {
@@ -298,73 +365,295 @@
                 });
             })
             .then(function (resp) {
+                if (!popupEl) {
+                    return;
+                }
                 statusEl.remove();
 
                 if (
                     !resp.ok ||
                     resp.data.error ||
                     !resp.data.translation ||
-                    resp.data.translation === "No translation"
+                    resp.data.translation === 'No translation'
                 ) {
-                    const errEl = document.createElement("div");
-                    errEl.className = "word-popup__error";
+                    const errEl = document.createElement('div');
+                    errEl.className = 'word-popup__error';
                     errEl.textContent =
                         resp.data && resp.data.error
                             ? resp.data.error
-                            : "No translation found";
+                            : 'No translation found';
                     popupEl.appendChild(errEl);
+                    positionWordPopup(targetEl, popupEl);
                     return;
                 }
 
                 const data = resp.data;
+                const canonicalWord = data.english || word;
+                titleEl.textContent = canonicalWord;
 
-                if (data.transcription || data.cefr) {
-                    const metaEl = document.createElement('div');
-                    metaEl.className = 'word-popup__meta';
-                    if (data.transcription) {
-                        const trEl = document.createElement('span');
-                        trEl.className = 'word-popup__transcription font-mono';
-                        trEl.textContent = data.transcription;
-                        metaEl.appendChild(trEl);
-                    }
-                    if (data.cefr) {
-                        const badgeEl = document.createElement('span');
-                        badgeEl.className = 'badge badge--cefr';
-                        badgeEl.textContent = data.cefr;
-                        metaEl.appendChild(badgeEl);
-                    }
+                if ('speechSynthesis' in window) {
+                    const audioBtn = document.createElement('button');
+                    audioBtn.type = 'button';
+                    audioBtn.className = 'word-popup__audio-btn';
+                    audioBtn.setAttribute('aria-label', 'Listen pronunciation');
+                    audioBtn.textContent = '🔊';
+                    audioBtn.addEventListener('click', function (ev) {
+                        ev.stopPropagation();
+                        window.speechSynthesis.cancel();
+                        const utterance = new SpeechSynthesisUtterance(canonicalWord);
+                        utterance.lang = 'en-US';
+                        utterance.rate = 0.9;
+                        window.speechSynthesis.speak(utterance);
+                    });
+                    titleWrap.appendChild(audioBtn);
+                }
+
+                const metaEl = document.createElement('div');
+                metaEl.className = 'word-popup__meta';
+
+                if (data.transcription) {
+                    const trEl = document.createElement('span');
+                    trEl.className = 'word-popup__transcription font-mono';
+                    trEl.textContent = data.transcription;
+                    metaEl.appendChild(trEl);
+                }
+                if (data.cefr) {
+                    const badgeEl = document.createElement('span');
+                    badgeEl.className = 'badge badge--cefr';
+                    badgeEl.textContent = data.cefr;
+                    metaEl.appendChild(badgeEl);
+                }
+                if (data.part_of_speech) {
+                    const posEl = document.createElement('span');
+                    posEl.className = 'badge word-popup__pos-badge';
+                    posEl.textContent = data.part_of_speech;
+                    metaEl.appendChild(posEl);
+                }
+                if (data.style) {
+                    const styleEl = document.createElement('span');
+                    styleEl.className = 'badge word-popup__style-badge';
+                    styleEl.textContent = data.style;
+                    metaEl.appendChild(styleEl);
+                }
+                if (data.frequency) {
+                    const freqEl = document.createElement('span');
+                    freqEl.className = 'badge word-popup__freq-badge';
+                    freqEl.textContent = '★ ' + data.frequency;
+                    metaEl.appendChild(freqEl);
+                }
+                if (metaEl.childNodes.length > 0) {
                     headerEl.appendChild(metaEl);
                 }
 
+                const bodyEl = document.createElement('div');
+                bodyEl.className = 'word-popup__body';
+
                 const transEl = document.createElement('div');
                 transEl.className = 'word-popup__translation';
-                transEl.textContent = data.translation || 'No translation';
-                popupEl.appendChild(transEl);
+                transEl.textContent = data.translation;
+                bodyEl.appendChild(transEl);
+
+                if (data.english_definition) {
+                    const defEl = document.createElement('div');
+                    defEl.className = 'word-popup__definition';
+                    defEl.textContent = data.english_definition;
+                    bodyEl.appendChild(defEl);
+                }
+
+                if (data.pattern) {
+                    const patEl = document.createElement('div');
+                    patEl.className = 'word-popup__pattern font-mono';
+                    patEl.textContent = data.pattern;
+                    bodyEl.appendChild(patEl);
+                }
+
+                if (data.what_it_means) {
+                    const whatEl = document.createElement('div');
+                    whatEl.className = 'word-popup__what-means';
+                    whatEl.textContent = data.what_it_means;
+                    bodyEl.appendChild(whatEl);
+                }
+
+                const meaningList = (data.meanings && data.meanings.length) ? data.meanings : (data.uses || []);
+                if (meaningList && meaningList.length > 0) {
+                    const secEl = document.createElement('div');
+                    secEl.className = 'word-popup__section';
+
+                    const secTitle = document.createElement('div');
+                    secTitle.className = 'word-popup__section-title';
+                    secTitle.textContent = data.entry_type === 'construction' ? 'Применения' : 'Значения и примеры';
+                    secEl.appendChild(secTitle);
+
+                    meaningList.slice(0, 3).forEach(function (m, idx) {
+                        const mItem = document.createElement('div');
+                        mItem.className = 'word-popup__meaning-item';
+
+                        const mRow = document.createElement('div');
+                        mRow.className = 'word-popup__meaning-row';
+
+                        const num = document.createElement('span');
+                        num.className = 'word-popup__meaning-num';
+                        num.textContent = (idx + 1) + '.';
+                        mRow.appendChild(num);
+
+                        const ruText = document.createElement('span');
+                        ruText.className = 'word-popup__meaning-ru';
+                        ruText.textContent = m.ru || '';
+                        mRow.appendChild(ruText);
+
+                        if (m.context) {
+                            const ctx = document.createElement('span');
+                            ctx.className = 'word-popup__context-tag';
+                            ctx.textContent = m.context;
+                            mRow.appendChild(ctx);
+                        }
+                        mItem.appendChild(mRow);
+
+                        if (m.examples && m.examples.length > 0) {
+                            const ex = m.examples[0];
+                            const exBox = document.createElement('div');
+                            exBox.className = 'word-popup__example';
+
+                            const exEn = document.createElement('div');
+                            exEn.className = 'word-popup__example-en';
+                            exEn.textContent = ex.en;
+                            exBox.appendChild(exEn);
+
+                            if (ex.ru) {
+                                const exRu = document.createElement('div');
+                                exRu.className = 'word-popup__example-ru';
+                                exRu.textContent = ex.ru;
+                                exBox.appendChild(exRu);
+                            }
+                            mItem.appendChild(exBox);
+                        }
+
+                        secEl.appendChild(mItem);
+                    });
+
+                    bodyEl.appendChild(secEl);
+                }
+
+                if (data.collocations && data.collocations.length > 0) {
+                    const colSec = document.createElement('div');
+                    colSec.className = 'word-popup__section';
+
+                    const colTitle = document.createElement('div');
+                    colTitle.className = 'word-popup__section-title';
+                    colTitle.textContent = 'Словосочетания';
+                    colSec.appendChild(colTitle);
+
+                    const tagsWrap = document.createElement('div');
+                    tagsWrap.className = 'word-popup__tags';
+
+                    data.collocations.slice(0, 5).forEach(function (c) {
+                        const tag = document.createElement('span');
+                        tag.className = 'word-popup__tag';
+                        tag.textContent = c;
+                        tagsWrap.appendChild(tag);
+                    });
+
+                    colSec.appendChild(tagsWrap);
+                    bodyEl.appendChild(colSec);
+                }
+
+                let syns = [];
+                if (data.synonyms_by_level && data.synonyms_by_level.length > 0) {
+                    data.synonyms_by_level.forEach(function (grp) {
+                        if (grp.synonyms && Array.isArray(grp.synonyms)) {
+                            grp.synonyms.forEach(function (s) {
+                                if (!syns.includes(s) && syns.length < 5) {
+                                    syns.push(s);
+                                }
+                            });
+                        }
+                    });
+                }
+
+                if (syns.length > 0) {
+                    const synSec = document.createElement('div');
+                    synSec.className = 'word-popup__section';
+
+                    const synTitle = document.createElement('div');
+                    synTitle.className = 'word-popup__section-title';
+                    synTitle.textContent = 'Синонимы';
+                    synSec.appendChild(synTitle);
+
+                    const synTags = document.createElement('div');
+                    synTags.className = 'word-popup__tags';
+
+                    syns.forEach(function (s) {
+                        const tag = document.createElement('span');
+                        tag.className = 'word-popup__tag word-popup__tag--syn';
+                        tag.textContent = s;
+                        synTags.appendChild(tag);
+                    });
+
+                    synSec.appendChild(synTags);
+                    bodyEl.appendChild(synSec);
+                } else if (data.word_family && data.word_family.length > 0) {
+                    const famSec = document.createElement('div');
+                    famSec.className = 'word-popup__section';
+
+                    const famTitle = document.createElement('div');
+                    famTitle.className = 'word-popup__section-title';
+                    famTitle.textContent = 'Формы слова';
+                    famSec.appendChild(famTitle);
+
+                    const famTags = document.createElement('div');
+                    famTags.className = 'word-popup__tags';
+
+                    data.word_family.slice(0, 5).forEach(function (f) {
+                        const tag = document.createElement('span');
+                        tag.className = 'word-popup__tag';
+                        tag.textContent = f;
+                        famTags.appendChild(tag);
+                    });
+
+                    famSec.appendChild(famTags);
+                    bodyEl.appendChild(famSec);
+                }
+
+                const footerEl = document.createElement('div');
+                footerEl.className = 'word-popup__footer';
 
                 const saveBtn = document.createElement('button');
                 saveBtn.className = 'word-popup__save-btn';
                 saveBtn.type = 'button';
                 if (data.is_saved) {
-                    saveBtn.textContent = '✅ Saved in vocabulary';
+                    saveBtn.textContent = '✅ Сохранено в словарь';
                     saveBtn.classList.add('word-popup__save-btn--saved');
                 } else {
-                    saveBtn.textContent = '🔖 Add to vocabulary';
+                    saveBtn.textContent = '🔖 Добавить в словарь';
                     saveBtn.addEventListener('click', function () {
-                        saveWordToVocab(word, saveBtn);
+                        saveWordToVocab(canonicalWord, saveBtn);
                     });
                 }
-                popupEl.appendChild(saveBtn);
+                footerEl.appendChild(saveBtn);
 
                 const dictLink = document.createElement('a');
                 dictLink.className = 'word-popup__dict-link';
-                dictLink.href = '/?q=' + encodeURIComponent(word);
+                dictLink.href = '/?q=' + encodeURIComponent(canonicalWord);
                 dictLink.target = '_blank';
-                dictLink.textContent = '📖 Full dictionary entry ↗';
-                popupEl.appendChild(dictLink);
+                dictLink.textContent = '📖 Полный разбор в словаре ↗';
+                footerEl.appendChild(dictLink);
+
+                bodyEl.appendChild(footerEl);
+                popupEl.appendChild(bodyEl);
+
+                requestAnimationFrame(function () {
+                    if (popupEl) {
+                        positionWordPopup(targetEl, popupEl);
+                    }
+                });
             })
             .catch(function () {
+                if (!popupEl) {
+                    return;
+                }
                 statusEl.className = 'word-popup__error';
                 statusEl.textContent = 'Lookup failed. Please try again.';
+                positionWordPopup(targetEl, popupEl);
             });
     }
 
@@ -462,12 +751,13 @@
                 }
 
                 const data = resp.data;
+                const canonicalWord = data.english || word;
                 const header = document.createElement('div');
                 header.className = 'quick-lookup__header';
 
                 const wordLabel = document.createElement('strong');
                 wordLabel.className = 'quick-lookup__word';
-                wordLabel.textContent = word;
+                wordLabel.textContent = canonicalWord;
                 header.appendChild(wordLabel);
 
                 if (data.transcription) {
@@ -486,12 +776,27 @@
                     header.appendChild(cefr);
                 }
 
+                if (data.part_of_speech) {
+                    const pos = document.createElement('span');
+                    pos.className = 'badge';
+                    pos.textContent = data.part_of_speech;
+                    header.appendChild(pos);
+                }
+
                 const translation = document.createElement('span');
                 translation.className = 'quick-lookup__translation';
                 translation.textContent = ' — ' + (data.translation || 'No translation');
                 header.appendChild(translation);
 
                 quickResult.appendChild(header);
+
+                if (data.english_definition) {
+                    const defEl = document.createElement('div');
+                    defEl.className = 'word-popup__definition';
+                    defEl.style.marginTop = '6px';
+                    defEl.textContent = data.english_definition;
+                    quickResult.appendChild(defEl);
+                }
 
                 const actions = document.createElement('div');
                 actions.className = 'quick-lookup__actions';
@@ -505,14 +810,14 @@
                 } else {
                     saveBtn.textContent = '🔖 Add to vocabulary';
                     saveBtn.addEventListener('click', function () {
-                        saveWordToVocab(word, saveBtn);
+                        saveWordToVocab(canonicalWord, saveBtn);
                     });
                 }
                 actions.appendChild(saveBtn);
 
                 const dictLink = document.createElement('a');
                 dictLink.className = 'btn btn--ghost-sm';
-                dictLink.href = '/?q=' + encodeURIComponent(word);
+                dictLink.href = '/?q=' + encodeURIComponent(canonicalWord);
                 dictLink.target = '_blank';
                 dictLink.textContent = '📖 View in Dictionary ↗';
                 actions.appendChild(dictLink);
@@ -534,11 +839,7 @@
 
     document.addEventListener('click', function (e) {
         if (popupEl && !popupEl.contains(e.target) && !e.target.classList.contains('subtitle-word')) {
-            popupEl.remove();
-            popupEl = null;
-            document.querySelectorAll('.subtitle-word--active').forEach(function (el) {
-                el.classList.remove('subtitle-word--active');
-            });
+            closeWordPopup();
         }
     });
 </script>

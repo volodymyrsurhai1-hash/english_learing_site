@@ -243,6 +243,43 @@ class DownloadProgressView(View):
 
 
 class TranslateWordView(View):
+    @staticmethod
+    def _extract_primary_translation(data: dict[str, Any]) -> str:
+        meanings: list[Any] = data.get("meanings", [])
+        if meanings and isinstance(meanings, list) and isinstance(meanings[0], dict):
+            return str(meanings[0].get("ru", "")).strip()
+
+        uses: list[Any] = data.get("uses", [])
+        if uses and isinstance(uses, list) and isinstance(uses[0], dict):
+            return str(uses[0].get("ru", "")).strip()
+
+        return ""
+
+    @staticmethod
+    def _build_payload(
+        data: dict[str, Any], word_query: str, translation: str, is_saved: bool
+    ) -> dict[str, Any]:
+        return {
+            "word": word_query,
+            "english": data.get("english") or word_query,
+            "translation": translation,
+            "transcription": data.get("transcription", ""),
+            "part_of_speech": data.get("part_of_speech", ""),
+            "cefr": data.get("cefr", ""),
+            "frequency": data.get("frequency", ""),
+            "style": data.get("style", ""),
+            "english_definition": data.get("english_definition", ""),
+            "entry_type": data.get("entry_type", "word"),
+            "pattern": data.get("pattern", ""),
+            "what_it_means": data.get("what_it_means", ""),
+            "meanings": data.get("meanings", []),
+            "uses": data.get("uses", []),
+            "collocations": data.get("collocations", []),
+            "synonyms_by_level": data.get("synonyms_by_level", []),
+            "word_family": data.get("word_family", []),
+            "is_saved": is_saved,
+        }
+
     def get(self, request: HttpRequest) -> JsonResponse:
         if not request.user.is_authenticated:
             return JsonResponse({"error": "Authentication required"}, status=401)
@@ -267,13 +304,7 @@ class TranslateWordView(View):
         try:
             data: dict[str, Any] = get_or_generate_word(word_query)
 
-            translation: str = ""
-            meanings: list[Any] = data.get("meanings", [])
-            if meanings and isinstance(meanings, list) and "ru" in meanings[0]:
-                translation = str(meanings[0]["ru"]).strip()
-            elif data.get("uses") and isinstance(data["uses"], list):
-                translation = str(data["uses"][0].get("ru", "")).strip()
-
+            translation: str = self._extract_primary_translation(data)
             if not translation or translation.lower() == "no translation":
                 return JsonResponse(
                     {"error": f"No translation found for '{word_query}'"},
@@ -284,19 +315,16 @@ class TranslateWordView(View):
             if request.user.is_authenticated:
                 is_saved = is_word_saved(word_query, request.user)
 
-            return JsonResponse(
-                {
-                    "word": word_query,
-                    "translation": translation,
-                    "transcription": data.get("transcription", ""),
-                    "cefr": data.get("cefr", ""),
-                    "is_saved": is_saved,
-                }
+            payload: dict[str, Any] = self._build_payload(
+                data, word_query, translation, is_saved
             )
+            return JsonResponse(payload)
         except Exception as exc:
-            err_str = str(exc)
+            err_str: str = str(exc)
             if "503" in err_str or "UNAVAILABLE" in err_str or "high demand" in err_str:
-                msg = "AI translation service is temporarily busy. Please try again in a moment."
+                msg: str = (
+                    "AI translation service is temporarily busy. Please try again in a moment."
+                )
             elif "not found" in err_str.lower() or "не является" in err_str:
                 msg = f"Word '{word_query}' was not recognized as a valid English word."
             else:
