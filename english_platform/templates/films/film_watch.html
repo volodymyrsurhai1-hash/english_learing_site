@@ -5,7 +5,7 @@
 {% block page_title %}🎬 {{ film.title }}{% endblock %}
 
 {% block extra_css %}
-<link rel="stylesheet" href="{% static 'css/films.css' %}?v=3">
+<link rel="stylesheet" href="{% static 'css/films.css' %}?v=4">
 {% endblock %}
 
 {% block content %}
@@ -396,13 +396,21 @@
                     audioBtn.type = 'button';
                     audioBtn.className = 'word-popup__audio-btn';
                     audioBtn.setAttribute('aria-label', 'Listen pronunciation');
-                    audioBtn.textContent = '🔊';
+                    audioBtn.setAttribute('title', 'Прослушать произношение');
+                    audioBtn.innerHTML = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path><path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path></svg>';
                     audioBtn.addEventListener('click', function (ev) {
                         ev.stopPropagation();
                         window.speechSynthesis.cancel();
                         const utterance = new SpeechSynthesisUtterance(canonicalWord);
                         utterance.lang = 'en-US';
                         utterance.rate = 0.9;
+                        audioBtn.classList.add('word-popup__audio-btn--playing');
+                        utterance.onend = function () {
+                            audioBtn.classList.remove('word-popup__audio-btn--playing');
+                        };
+                        utterance.onerror = function () {
+                            audioBtn.classList.remove('word-popup__audio-btn--playing');
+                        };
                         window.speechSynthesis.speak(utterance);
                     });
                     titleWrap.appendChild(audioBtn);
