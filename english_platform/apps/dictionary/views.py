@@ -34,7 +34,23 @@ class SearchView(TemplateView):
                 context["error"] = validation_error
             else:
                 try:
-                    context["result"] = get_or_generate_word(query)
+                    result: dict[str, Any] = get_or_generate_word(query)
+                    context["result"] = result
+
+                    primary_trans: str = ""
+                    meanings: list[Any] = result.get("meanings", [])
+                    uses: list[Any] = result.get("uses", [])
+                    if (
+                        meanings
+                        and isinstance(meanings, list)
+                        and isinstance(meanings[0], dict)
+                    ):
+                        primary_trans = str(meanings[0].get("ru", "")).strip()
+                    elif uses and isinstance(uses, list) and isinstance(uses[0], dict):
+                        primary_trans = str(uses[0].get("ru", "")).strip()
+
+                    context["primary_translation"] = primary_trans
+
                     if self.request.user.is_authenticated:
                         context["is_saved"] = is_word_saved(query, self.request.user)
                     else:

@@ -22,7 +22,10 @@
     <div class="dictionary__result">
         <div class="card dictionary__header">
             <div class="dictionary__header-top">
-                <h2 class="dictionary__word">{{ result.english }}</h2>
+                <div class="dictionary__word-row">
+                    <h2 class="dictionary__word">{{ result.english }}</h2>
+                    <button type="button" class="word-popup__audio-btn dictionary__audio-btn" id="dict-audio-btn" data-word="{{ result.english }}" aria-label="Listen pronunciation" title="Прослушать произношение">🔊</button>
+                </div>
                 <div class="dictionary__header-meta">
                     {% if result.transcription %}
                     <span class="dictionary__transcription font-mono">{{ result.transcription }}</span>
@@ -33,8 +36,32 @@
                     {% if result.part_of_speech %}
                     <span class="badge">{{ result.part_of_speech }}</span>
                     {% endif %}
+                    {% if result.style %}
+                    <span class="badge word-popup__style-badge" title="Стиль и сфера употребления">{{ result.style }}</span>
+                    {% endif %}
+                    {% if result.frequency %}
+                    <span class="badge word-popup__freq-badge" title="Частотность слова в речи">★ {{ result.frequency }}</span>
+                    {% endif %}
                 </div>
             </div>
+
+            {% if primary_translation %}
+            <div class="dictionary__primary-translation">
+                {{ primary_translation }}
+            </div>
+            {% endif %}
+
+            {% if result.pattern %}
+            <p class="construction__pattern font-mono">{{ result.pattern }}</p>
+            {% endif %}
+
+            {% if result.what_it_means %}
+            <p class="dictionary__what-means">{{ result.what_it_means }}</p>
+            {% endif %}
+
+            {% if result.english_definition %}
+            <p class="dictionary__definition">{{ result.english_definition }}</p>
+            {% endif %}
 
             <div class="dictionary__header-actions">
                 {% if user.is_authenticated %}
@@ -48,29 +75,28 @@
                     <form method="post" action="{% url 'dictionary:save_word' %}">
                         {% csrf_token %}
                         <input type="hidden" name="word" value="{{ query }}">
-                        <button type="submit" class="btn btn--outline-sm">🔖 Сохранить</button>
+                        <button type="submit" class="btn btn--outline-sm">🔖 Сохранить в словарь</button>
                     </form>
                     {% endif %}
                 {% else %}
                 <a href="{% url 'two_factor:login' %}" class="btn btn--outline-sm">🔖 Войти чтобы сохранить</a>
                 {% endif %}
             </div>
-
-            {% if result.english_definition %}
-            <p class="dictionary__definition">{{ result.english_definition }}</p>
-            {% endif %}
         </div>
-
 
         {% if result.meanings %}
         <div class="card">
             <h3 class="card__title">Значения</h3>
             {% for meaning in result.meanings %}
             <div class="meaning">
-                <p class="meaning__ru">{{ meaning.ru }}</p>
-                {% if meaning.context %}
-                <span class="meaning__context">{{ meaning.context }}</span>
-                {% endif %}
+                <div class="meaning__header">
+                    <span class="meaning__num">{{ forloop.counter }}</span>
+                    <p class="meaning__ru">{{ meaning.ru }}</p>
+                    {% if meaning.context %}
+                    <span class="meaning__context">{{ meaning.context }}</span>
+                    {% endif %}
+                </div>
+                {% if meaning.examples %}
                 <ul class="meaning__examples">
                     {% for ex in meaning.examples %}
                     <li>
@@ -79,6 +105,7 @@
                     </li>
                     {% endfor %}
                 </ul>
+                {% endif %}
             </div>
             {% endfor %}
         </div>
@@ -92,10 +119,14 @@
             {% endif %}
             {% for use in result.uses %}
             <div class="meaning">
-                <p class="meaning__ru">{{ use.ru }}</p>
-                {% if use.context %}
-                <span class="meaning__context">{{ use.context }}</span>
-                {% endif %}
+                <div class="meaning__header">
+                    <span class="meaning__num">{{ forloop.counter }}</span>
+                    <p class="meaning__ru">{{ use.ru }}</p>
+                    {% if use.context %}
+                    <span class="meaning__context">{{ use.context }}</span>
+                    {% endif %}
+                </div>
+                {% if use.examples %}
                 <ul class="meaning__examples">
                     {% for ex in use.examples %}
                     <li>
@@ -104,6 +135,7 @@
                     </li>
                     {% endfor %}
                 </ul>
+                {% endif %}
             </div>
             {% endfor %}
         </div>
@@ -219,6 +251,21 @@
             searchBtn.classList.remove("dictionary__btn--loading");
             searchBtn.textContent = "Найти";
         });
+
+        const dictAudioBtn = document.getElementById("dict-audio-btn");
+        if (dictAudioBtn && "speechSynthesis" in window) {
+            dictAudioBtn.addEventListener("click", function () {
+                window.speechSynthesis.cancel();
+                const word = this.getAttribute("data-word") || "";
+                if (!word) {
+                    return;
+                }
+                const utterance = new SpeechSynthesisUtterance(word);
+                utterance.lang = "en-US";
+                utterance.rate = 0.9;
+                window.speechSynthesis.speak(utterance);
+            });
+        }
     });
 </script>
 {% endblock %}
