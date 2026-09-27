@@ -1,4 +1,4 @@
-<img width="1445" height="618" alt="image" src="https://github.com/user-attachments/assets/006b60a5-b8c0-402e-a536-9877a77db645" /># 🇬🇧 English Learning Platform (AI-Powered)
+# 🇬🇧 English Learning Platform (AI-Powered)
 
 https://vsenglish.me/
 
