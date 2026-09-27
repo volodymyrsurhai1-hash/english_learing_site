@@ -228,6 +228,87 @@ a.sidebar__logo:hover .sidebar__logo-mark {
     white-space: nowrap;
 }
 
+.sidebar__subscription {
+    margin-top: auto;
+    padding: 16px 14px 8px;
+    border-top: 1px solid var(--border-muted);
+}
+
+.sidebar__subscription-card {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid var(--border-default);
+    border-radius: var(--radius-md);
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.sidebar__subscription-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+.sidebar__subscription-tier {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text-muted);
+}
+
+.sidebar__subscription-quotas {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.sidebar__quota-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 12px;
+}
+
+.sidebar__quota-label {
+    color: var(--text-secondary);
+}
+
+.sidebar__quota-count {
+    font-weight: 600;
+    color: var(--text-primary);
+    font-family: var(--font-mono);
+    font-size: 11.5px;
+    background: rgba(255, 255, 255, 0.05);
+    padding: 1px 6px;
+    border-radius: 4px;
+}
+
+.sidebar__upgrade-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 8px 10px;
+    background: linear-gradient(135deg, rgba(251, 191, 36, 0.2) 0%, rgba(245, 158, 11, 0.25) 100%);
+    border: 1px solid rgba(251, 191, 36, 0.45);
+    color: var(--accent-yellow);
+    border-radius: var(--radius-sm);
+    font-size: 12px;
+    font-weight: 700;
+    text-decoration: none !important;
+    transition: all 0.15s ease;
+}
+
+.sidebar__upgrade-btn:hover {
+    background: linear-gradient(135deg, rgba(251, 191, 36, 0.3) 0%, rgba(245, 158, 11, 0.35) 100%);
+    border-color: rgba(251, 191, 36, 0.6);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(251, 191, 36, 0.25);
+}
+
 .main {
     margin-left: var(--sidebar-width);
     flex: 1;
@@ -1467,13 +1548,14 @@ a.sidebar__logo:hover .sidebar__logo-mark {
     .topbar__subscription {
         margin-right: 0;
         gap: 6px;
+        flex-shrink: 0;
     }
 
-    .quota-indicators {
+    .topbar__subscription .quota-indicators {
         display: none !important;
     }
 
-    .btn--upgrade-sm {
+    .topbar__subscription .btn--upgrade-sm {
         display: none !important;
     }
 
@@ -1531,8 +1613,8 @@ a.sidebar__logo:hover .sidebar__logo-mark {
     }
 
     .plan-badge {
-        font-size: 10px;
-        padding: 2px 6px;
+        font-size: 11px;
+        padding: 3px 7px;
     }
 
     .topbar__user-avatar {
@@ -1570,6 +1652,17 @@ a.sidebar__logo:hover .sidebar__logo-mark {
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.5px;
+}
+
+a.plan-badge {
+    text-decoration: none !important;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+a.plan-badge:hover {
+    transform: translateY(-1px);
+    filter: brightness(1.18);
 }
 
 .plan-badge--free {
@@ -1635,6 +1728,26 @@ a.sidebar__logo:hover .sidebar__logo-mark {
 .btn--upgrade-sm:hover {
     transform: translateY(-1px);
     box-shadow: 0 4px 12px rgba(245, 158, 11, 0.5);
+}
+
+.profile__upgrade-btn {
+    display: inline-flex !important;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 16px;
+    background: linear-gradient(135deg, #f59e0b, #ef4444);
+    color: #fff !important;
+    font-size: 13px;
+    font-weight: 700;
+    border-radius: var(--radius-sm);
+    text-decoration: none !important;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+    box-shadow: 0 2px 8px rgba(245, 158, 11, 0.3);
+}
+
+.profile__upgrade-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 14px rgba(245, 158, 11, 0.5);
 }
 
 .profile__subscription-card {
