@@ -1,4 +1,6 @@
-# 🇬🇧 English Learning Platform (AI-Powered)
+<img width="1445" height="618" alt="image" src="https://github.com/user-attachments/assets/006b60a5-b8c0-402e-a536-9877a77db645" /># 🇬🇧 English Learning Platform (AI-Powered)
+
+https://vsenglish.me/
 
 [![Python](https://img.shields.io/badge/Python-3.12%2B-blue.svg?style=flat&logo=python)](https://www.python.org/)
 [![Django](https://img.shields.io/badge/Django-5.x-green.svg?style=flat&logo=django)](https://www.djangoproject.com/)
