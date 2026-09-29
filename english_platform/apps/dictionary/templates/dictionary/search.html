@@ -5,6 +5,7 @@
 
 {% block content %}
 <div class="dictionary">
+    <div class="dictionary__progress" id="dict-progress"><div class="dictionary__progress-bar"></div></div>
     <form class="dictionary__search" method="get" action="">
         <input
             class="dictionary__input"
@@ -275,6 +276,7 @@
         const searchForm = document.querySelector(".dictionary__search");
         const searchInput = document.querySelector(".dictionary__input");
         const searchBtn = document.querySelector(".dictionary__btn");
+        const progressBar = document.getElementById("dict-progress");
 
         if (!searchForm || !searchInput || !searchBtn) {
             return;
@@ -282,28 +284,67 @@
 
         let isSubmitting = false;
 
+        function showLoading(query, activeTag) {
+            if (isSubmitting) {
+                return;
+            }
+            isSubmitting = true;
+
+            if (progressBar) {
+                progressBar.classList.add("dictionary__progress--active");
+            }
+
+            if (query && searchInput) {
+                searchInput.value = query;
+            }
+
+            searchBtn.disabled = true;
+            searchBtn.classList.add("dictionary__btn--loading");
+            searchBtn.innerHTML = '<span class="dictionary__btn-spinner"></span> Поиск...';
+
+            if (activeTag) {
+                activeTag.classList.add("tag--loading");
+                const currentText = activeTag.textContent.trim();
+                activeTag.innerHTML = '<span class="tag-spinner"></span> ' + currentText;
+            }
+        }
+
         searchForm.addEventListener("submit", function (event) {
             const queryValue = searchInput.value.trim();
             if (!queryValue || isSubmitting) {
                 event.preventDefault();
                 return;
             }
+            showLoading(queryValue, null);
+        });
 
-            isSubmitting = true;
-            searchBtn.disabled = true;
-            searchBtn.classList.add("dictionary__btn--loading");
-            searchBtn.textContent = "Поиск...";
-
-            setTimeout(function () {
-                searchInput.value = "";
-            }, 0);
+        document.querySelectorAll(".tag--clickable").forEach(function (tag) {
+            tag.addEventListener("click", function (event) {
+                event.preventDefault();
+                if (isSubmitting) {
+                    return;
+                }
+                const word = this.getAttribute("data-query") || this.textContent.trim();
+                showLoading(word, this);
+                window.location.href = this.getAttribute("href") || ('/?q=' + encodeURIComponent(word));
+            });
         });
 
         window.addEventListener("pageshow", function () {
             isSubmitting = false;
+            if (progressBar) {
+                progressBar.classList.remove("dictionary__progress--active");
+            }
             searchBtn.disabled = false;
             searchBtn.classList.remove("dictionary__btn--loading");
             searchBtn.textContent = "Найти";
+            document.querySelectorAll(".tag--loading").forEach(function (tag) {
+                tag.classList.remove("tag--loading");
+                const spinner = tag.querySelector(".tag-spinner");
+                if (spinner) {
+                    spinner.remove();
+                }
+            });
         });
 
         const dictAudioBtn = document.getElementById("dict-audio-btn");
