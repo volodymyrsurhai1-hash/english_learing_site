@@ -715,39 +715,273 @@ a.sidebar__logo:hover .sidebar__logo-mark {
     border-radius: 6px;
 }
 
-.dictionary__primary-translation {
+.dict-grid {
+    display: grid;
+    grid-template-columns: 1fr 340px;
+    gap: 20px;
+    align-items: start;
+    margin-top: 20px;
+}
+
+@media (max-width: 960px) {
+    .dict-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.dict-grid__main {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.dict-grid__side {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.dict-hero {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    background: linear-gradient(165deg, rgba(20, 28, 46, 0.95) 0%, rgba(15, 23, 42, 0.98) 100%);
+    border: 1px solid rgba(56, 189, 248, 0.22);
+    box-shadow: 0 12px 36px rgba(0, 0, 0, 0.35);
+}
+
+.dict-hero__top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+}
+
+.dict-hero__title-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.dict-hero__word {
+    font-size: 32px;
+    font-weight: 800;
+    color: #ffffff;
+    letter-spacing: -0.02em;
+    margin: 0;
+    line-height: 1.15;
+}
+
+.dict-hero__actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.dict-hero__meta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+}
+
+.dict-badge {
+    font-size: 12px;
+    font-weight: 600;
+    padding: 3px 10px;
+    border-radius: 6px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: #cbd5e1;
+    line-height: 1.35;
+}
+
+.dict-badge--mono {
+    font-family: var(--font-mono, monospace);
+    color: #7dd3fc;
+    background: rgba(56, 189, 248, 0.08);
+    border-color: rgba(56, 189, 248, 0.2);
+}
+
+.dict-badge--pos {
+    color: #cbd5e1;
+    text-transform: lowercase;
+}
+
+.dict-badge--freq {
+    color: #fde047;
+    background: rgba(250, 204, 21, 0.08);
+    border-color: rgba(250, 204, 21, 0.22);
+}
+
+.dict-badge--style {
+    color: #94a3b8;
+    background: rgba(148, 163, 184, 0.08);
+    border-color: rgba(148, 163, 184, 0.18);
+}
+
+.dict-fields {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    margin-top: 4px;
+}
+
+.dict-field-block {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.dict-field-label {
+    display: inline-flex;
+    align-items: center;
+    align-self: flex-start;
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 2px 7px;
+    border-radius: 4px;
+    background: rgba(255, 255, 255, 0.06);
+    color: #94a3b8;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.dict-field-label--primary {
+    color: #7dd3fc;
+    background: rgba(56, 189, 248, 0.12);
+    border-color: rgba(56, 189, 248, 0.3);
+}
+
+.dict-field-label--def {
+    color: #cbd5e1;
+    background: rgba(148, 163, 184, 0.12);
+    border-color: rgba(148, 163, 184, 0.25);
+}
+
+.dict-field-label--pattern {
+    color: #e2e8f0;
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(255, 255, 255, 0.18);
+}
+
+.dict-field-label--essence {
+    color: #94a3b8;
+    background: rgba(148, 163, 184, 0.1);
+    border-color: rgba(148, 163, 184, 0.2);
+}
+
+.dict-field-label--slot {
+    color: #34d399;
+    background: rgba(52, 211, 153, 0.12);
+    border-color: rgba(52, 211, 153, 0.3);
+}
+
+.dict-primary-text {
     font-size: 20px;
     font-weight: 700;
     color: #ffffff;
-    background: linear-gradient(135deg, rgba(56, 189, 248, 0.16) 0%, rgba(99, 102, 241, 0.14) 100%);
-    border: 1px solid rgba(56, 189, 248, 0.3);
-    border-radius: 12px;
-    padding: 12px 18px;
-    margin: 8px 0 12px;
+    background: rgba(30, 41, 59, 0.6);
+    border: 1px solid rgba(56, 189, 248, 0.25);
+    border-left: 4px solid var(--accent-blue);
+    border-radius: 0 10px 10px 0;
+    padding: 12px 16px;
     line-height: 1.35;
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
-    display: inline-block;
 }
 
-.dictionary__what-means {
-    font-size: 14px;
-    color: var(--text-secondary);
-    line-height: 1.5;
-    margin-bottom: 12px;
-}
-
-.dictionary__definition {
-    width: 100%;
-    margin-top: 8px;
-    margin-bottom: 12px;
-    padding: 10px 14px;
-    background: rgba(255, 255, 255, 0.03);
-    border-left: 3px solid var(--accent-blue);
-    border-radius: 0 8px 8px 0;
-    font-size: 14px;
+.dict-definition-text {
+    font-size: 14.5px;
     color: #cbd5e1;
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-left: 3px solid #64748b;
+    border-radius: 0 8px 8px 0;
+    padding: 10px 14px;
+    line-height: 1.55;
     font-style: italic;
-    line-height: 1.6;
+}
+
+.dict-pattern-text {
+    font-size: 13.5px;
+    color: #e2e8f0;
+    background: rgba(15, 23, 42, 0.7);
+    border: 1px dashed rgba(148, 163, 184, 0.3);
+    border-radius: 8px;
+    padding: 8px 12px;
+    line-height: 1.45;
+}
+
+.dict-essence-text {
+    font-size: 13.5px;
+    color: #94a3b8;
+    padding-left: 10px;
+    border-left: 2px solid rgba(148, 163, 184, 0.2);
+    line-height: 1.45;
+}
+
+.dict-section-card {
+    background: linear-gradient(165deg, rgba(20, 26, 43, 0.85) 0%, rgba(15, 23, 42, 0.9) 100%);
+    border: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+.dict-section-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+.dict-section-icon {
+    font-size: 16px;
+}
+
+.dict-section-title {
+    font-size: 15px;
+    font-weight: 700;
+    color: #ffffff;
+    letter-spacing: -0.01em;
+    margin: 0;
+}
+
+.dict-sidebar-card {
+    background: linear-gradient(165deg, rgba(19, 25, 41, 0.8) 0%, rgba(13, 18, 32, 0.85) 100%);
+    border: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+.tag--clickable {
+    cursor: pointer;
+    text-decoration: none;
+    transition: all 0.15s ease;
+}
+
+.tag--clickable:hover {
+    background: rgba(56, 189, 248, 0.15);
+    border-color: rgba(56, 189, 248, 0.4);
+    color: #ffffff;
+    transform: translateY(-1px);
+}
+
+.tag--slot {
+    background: rgba(52, 211, 153, 0.08);
+    border-color: rgba(52, 211, 153, 0.2);
+    color: #a7f3d0;
+}
+
+.example__tag {
+    display: inline-flex;
+    align-self: flex-start;
+    font-size: 10px;
+    color: #94a3b8;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 4px;
+    padding: 1px 6px;
+    margin-top: 4px;
 }
 
 .meaning {
@@ -796,9 +1030,9 @@ a.sidebar__logo:hover .sidebar__logo-mark {
     align-items: center;
     font-size: 11.5px;
     font-weight: 500;
-    color: var(--accent-blue);
-    background: rgba(56, 189, 248, 0.1);
-    border: 1px solid rgba(56, 189, 248, 0.22);
+    color: #94a3b8;
+    background: rgba(148, 163, 184, 0.1);
+    border: 1px solid rgba(148, 163, 184, 0.22);
     padding: 2px 8px;
     border-radius: 6px;
     line-height: 1.2;
@@ -836,18 +1070,6 @@ a.sidebar__logo:hover .sidebar__logo-mark {
     line-height: 1.4;
 }
 
-.construction__pattern {
-    font-size: 18px;
-    font-weight: 700;
-    color: var(--accent-yellow);
-    margin-bottom: 16px;
-    padding: 8px 14px;
-    background: rgba(251, 191, 36, 0.08);
-    border: 1px solid rgba(251, 191, 36, 0.2);
-    border-radius: var(--radius-sm);
-    display: inline-block;
-}
-
 .slot {
     padding: 14px 0;
     border-bottom: 1px solid var(--border-muted);
@@ -857,10 +1079,17 @@ a.sidebar__logo:hover .sidebar__logo-mark {
     border-bottom: none;
 }
 
+.slot__header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 4px;
+}
+
 .slot__name {
-    font-size: 15px;
-    font-weight: 600;
-    color: var(--accent-green);
+    font-size: 14px;
+    font-weight: 700;
+    color: #34d399;
 }
 
 .slot__desc {
@@ -872,8 +1101,8 @@ a.sidebar__logo:hover .sidebar__logo-mark {
 .synonym-group {
     display: flex;
     align-items: flex-start;
-    gap: 12px;
-    margin-bottom: 14px;
+    gap: 10px;
+    margin-bottom: 12px;
 }
 
 .synonym-group:last-child {
@@ -899,12 +1128,12 @@ a.sidebar__logo:hover .sidebar__logo-mark {
 }
 
 .variation__pattern {
-    font-size: 14px;
+    font-size: 13px;
     font-weight: 600;
-    color: var(--accent-yellow);
-    background: rgba(251, 191, 36, 0.08);
-    border: 1px solid rgba(251, 191, 36, 0.2);
-    padding: 3px 10px;
+    color: #e2e8f0;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    padding: 3px 8px;
     border-radius: 6px;
 }
 

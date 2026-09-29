@@ -20,199 +20,247 @@
 
     {% if result %}
     <div class="dictionary__result">
-        <div class="card dictionary__header">
-            <div class="dictionary__header-top">
-                <div class="dictionary__word-row">
-                    <h2 class="dictionary__word">{{ result.english }}</h2>
-                    <button type="button" class="dictionary__audio-btn" id="dict-audio-btn" data-word="{{ result.english }}" aria-label="Listen pronunciation" title="Прослушать произношение">
-                        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                            <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
-                            <path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path>
-                            <path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path>
-                        </svg>
-                    </button>
+        <div class="dict-grid">
+            <div class="dict-grid__main">
+                <div class="card dict-hero">
+                    <div class="dict-hero__top">
+                        <div class="dict-hero__title-row">
+                            <h2 class="dict-hero__word">{{ result.english }}</h2>
+                            <button type="button" class="dictionary__audio-btn" id="dict-audio-btn" data-word="{{ result.english }}" aria-label="Listen pronunciation" title="Прослушать произношение">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                    <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+                                    <path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+                                    <path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path>
+                                </svg>
+                            </button>
+                        </div>
+                        <div class="dict-hero__actions">
+                            {% if user.is_authenticated %}
+                                {% if is_saved %}
+                                <form method="post" action="{% url 'dictionary:delete_word' %}">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="word" value="{{ query }}">
+                                    <button type="submit" class="btn btn--danger-sm">🗑 Удалить из сохранённых</button>
+                                </form>
+                                {% else %}
+                                <form method="post" action="{% url 'dictionary:save_word' %}">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="word" value="{{ query }}">
+                                    <button type="submit" class="btn btn--outline-sm">🔖 Сохранить в словарь</button>
+                                </form>
+                                {% endif %}
+                            {% else %}
+                            <a href="{% url 'two_factor:login' %}" class="btn btn--outline-sm">🔖 Войти чтобы сохранить</a>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="dict-hero__meta">
+                        {% if result.transcription %}
+                        <span class="dict-badge dict-badge--mono">{{ result.transcription }}</span>
+                        {% endif %}
+                        {% if result.part_of_speech %}
+                        <span class="dict-badge dict-badge--pos">{{ result.part_of_speech }}</span>
+                        {% endif %}
+                        {% if result.cefr %}
+                        <span class="badge badge--cefr">{{ result.cefr }}</span>
+                        {% endif %}
+                        {% if result.frequency %}
+                        <span class="dict-badge dict-badge--freq" title="Частотность слова в речи">★ {{ result.frequency }}</span>
+                        {% endif %}
+                        {% if result.style %}
+                        <span class="dict-badge dict-badge--style" title="Стиль и сфера употребления">{{ result.style }}</span>
+                        {% endif %}
+                    </div>
+
+                    <div class="dict-fields">
+                        {% if primary_translation %}
+                        <div class="dict-field-block">
+                            <span class="dict-field-label dict-field-label--primary">ОСНОВНОЙ ПЕРЕВОД</span>
+                            <div class="dict-primary-text">{{ primary_translation }}</div>
+                        </div>
+                        {% endif %}
+
+                        {% if result.english_definition %}
+                        <div class="dict-field-block">
+                            <span class="dict-field-label dict-field-label--def">ОПРЕДЕЛЕНИЕ (EN)</span>
+                            <div class="dict-definition-text">{{ result.english_definition }}</div>
+                        </div>
+                        {% endif %}
+
+                        {% if result.pattern %}
+                        <div class="dict-field-block">
+                            <span class="dict-field-label dict-field-label--pattern">СХЕМА КОНСТРУКЦИИ</span>
+                            <div class="dict-pattern-text font-mono">{{ result.pattern }}</div>
+                        </div>
+                        {% endif %}
+
+                        {% if result.what_it_means and result.what_it_means != result.english_definition %}
+                        <div class="dict-field-block">
+                            <span class="dict-field-label dict-field-label--essence">СУТЬ ВЫРАЖЕНИЯ</span>
+                            <div class="dict-essence-text">{{ result.what_it_means }}</div>
+                        </div>
+                        {% endif %}
+                    </div>
                 </div>
-                <div class="dictionary__header-meta">
-                    {% if result.transcription %}
-                    <span class="dictionary__transcription font-mono">{{ result.transcription }}</span>
+
+                {% if result.meanings %}
+                <div class="card dict-section-card">
+                    <div class="dict-section-header">
+                        <span class="dict-section-icon">📖</span>
+                        <h3 class="dict-section-title">Значения и примеры</h3>
+                    </div>
+                    {% for meaning in result.meanings %}
+                    <div class="meaning">
+                        <div class="meaning__header">
+                            <span class="meaning__num">{{ forloop.counter }}</span>
+                            <span class="meaning__ru">{{ meaning.ru }}</span>
+                            {% if meaning.context %}
+                            <span class="meaning__context">{{ meaning.context }}</span>
+                            {% endif %}
+                        </div>
+                        {% if meaning.examples %}
+                        <ul class="meaning__examples">
+                            {% for ex in meaning.examples %}
+                            <li>
+                                <div class="example__en">{{ ex.en }}</div>
+                                <div class="example__ru">{{ ex.ru }}</div>
+                                {% if ex.tag %}
+                                <span class="example__tag">{{ ex.tag }}</span>
+                                {% endif %}
+                            </li>
+                            {% endfor %}
+                        </ul>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                </div>
+                {% elif result.uses %}
+                <div class="card dict-section-card">
+                    <div class="dict-section-header">
+                        <span class="dict-section-icon">📖</span>
+                        <h3 class="dict-section-title">Применения и примеры</h3>
+                    </div>
+                    {% for use in result.uses %}
+                    <div class="meaning">
+                        <div class="meaning__header">
+                            <span class="meaning__num">{{ forloop.counter }}</span>
+                            <span class="meaning__ru">{{ use.ru }}</span>
+                            {% if use.context %}
+                            <span class="meaning__context">{{ use.context }}</span>
+                            {% endif %}
+                        </div>
+                        {% if use.examples %}
+                        <ul class="meaning__examples">
+                            {% for ex in use.examples %}
+                            <li>
+                                <div class="example__en">{{ ex.en }}</div>
+                                <div class="example__ru">{{ ex.ru }}</div>
+                                {% if ex.tag %}
+                                <span class="example__tag">{{ ex.tag }}</span>
+                                {% endif %}
+                            </li>
+                            {% endfor %}
+                        </ul>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+
+                {% if result.slots or result.variations %}
+                <div class="card dict-section-card">
+                    <div class="dict-section-header">
+                        <span class="dict-section-icon">🧩</span>
+                        <h3 class="dict-section-title">Структура и слоты конструкции</h3>
+                    </div>
+
+                    {% if result.slots %}
+                    <div class="dict-slots-list">
+                        {% for slot in result.slots %}
+                        <div class="slot">
+                            <div class="slot__header">
+                                <span class="dict-field-label dict-field-label--slot">СЛОТ</span>
+                                <strong class="slot__name font-mono">{{ slot.name }}</strong>
+                            </div>
+                            <p class="slot__desc">{{ slot.description }}</p>
+                            {% if slot.examples %}
+                            <div class="tags">
+                                {% for ex in slot.examples %}
+                                <span class="tag tag--slot">{{ ex }}</span>
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+                        </div>
+                        {% endfor %}
+                    </div>
                     {% endif %}
-                    {% if result.cefr %}
-                    <span class="badge badge--cefr">{{ result.cefr }}</span>
-                    {% endif %}
-                    {% if result.part_of_speech %}
-                    <span class="badge">{{ result.part_of_speech }}</span>
-                    {% endif %}
-                    {% if result.style %}
-                    <span class="badge word-popup__style-badge" title="Стиль и сфера употребления">{{ result.style }}</span>
-                    {% endif %}
-                    {% if result.frequency %}
-                    <span class="badge word-popup__freq-badge" title="Частотность слова в речи">★ {{ result.frequency }}</span>
+
+                    {% if result.variations %}
+                    <div class="dict-variations-list">
+                        {% for var in result.variations %}
+                        <div class="variation">
+                            <code class="variation__pattern font-mono">{{ var.pattern }}</code>
+                            <span class="variation__note">{{ var.note }}</span>
+                        </div>
+                        {% endfor %}
+                    </div>
                     {% endif %}
                 </div>
+                {% endif %}
             </div>
 
-            {% if primary_translation %}
-            <div class="dictionary__primary-translation">
-                {{ primary_translation }}
-            </div>
-            {% endif %}
+            <div class="dict-grid__side">
+                {% if result.synonyms_by_level %}
+                <div class="card dict-sidebar-card">
+                    <div class="dict-section-header">
+                        <span class="dict-section-icon">🎯</span>
+                        <h3 class="dict-section-title">Синонимы</h3>
+                    </div>
+                    <div class="dict-synonyms-groups">
+                        {% for group in result.synonyms_by_level %}
+                        <div class="synonym-group">
+                            <span class="badge badge--cefr">{{ group.level }}</span>
+                            <div class="tags">
+                                {% for syn in group.synonyms %}
+                                <a href="/?q={{ syn }}" class="tag tag--clickable" title="Искать «{{ syn }}»">{{ syn }}</a>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
 
-            {% if result.pattern %}
-            <p class="construction__pattern font-mono">{{ result.pattern }}</p>
-            {% endif %}
+                {% if result.collocations %}
+                <div class="card dict-sidebar-card">
+                    <div class="dict-section-header">
+                        <span class="dict-section-icon">💬</span>
+                        <h3 class="dict-section-title">Словосочетания</h3>
+                    </div>
+                    <div class="tags">
+                        {% for col in result.collocations %}
+                        <a href="/?q={{ col }}" class="tag tag--clickable" title="Искать «{{ col }}»">{{ col }}</a>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
 
-            {% if result.what_it_means %}
-            <p class="dictionary__what-means">{{ result.what_it_means }}</p>
-            {% endif %}
-
-            {% if result.english_definition %}
-            <p class="dictionary__definition">{{ result.english_definition }}</p>
-            {% endif %}
-
-            <div class="dictionary__header-actions">
-                {% if user.is_authenticated %}
-                    {% if is_saved %}
-                    <form method="post" action="{% url 'dictionary:delete_word' %}">
-                        {% csrf_token %}
-                        <input type="hidden" name="word" value="{{ query }}">
-                        <button type="submit" class="btn btn--danger-sm">🗑 Удалить из сохранённых</button>
-                    </form>
-                    {% else %}
-                    <form method="post" action="{% url 'dictionary:save_word' %}">
-                        {% csrf_token %}
-                        <input type="hidden" name="word" value="{{ query }}">
-                        <button type="submit" class="btn btn--outline-sm">🔖 Сохранить в словарь</button>
-                    </form>
-                    {% endif %}
-                {% else %}
-                <a href="{% url 'two_factor:login' %}" class="btn btn--outline-sm">🔖 Войти чтобы сохранить</a>
+                {% if result.word_family %}
+                <div class="card dict-sidebar-card">
+                    <div class="dict-section-header">
+                        <span class="dict-section-icon">🌳</span>
+                        <h3 class="dict-section-title">Формы и родственные слова</h3>
+                    </div>
+                    <div class="tags">
+                        {% for w in result.word_family %}
+                        <a href="/?q={{ w }}" class="tag tag--clickable" title="Искать «{{ w }}»">{{ w }}</a>
+                        {% endfor %}
+                    </div>
+                </div>
                 {% endif %}
             </div>
         </div>
-
-        {% if result.meanings %}
-        <div class="card">
-            <h3 class="card__title">Значения</h3>
-            {% for meaning in result.meanings %}
-            <div class="meaning">
-                <div class="meaning__header">
-                    <span class="meaning__num">{{ forloop.counter }}</span>
-                    <span class="meaning__ru">{{ meaning.ru }}</span>
-                    {% if meaning.context %}
-                    <span class="meaning__context">{{ meaning.context }}</span>
-                    {% endif %}
-                </div>
-                {% if meaning.examples %}
-                <ul class="meaning__examples">
-                    {% for ex in meaning.examples %}
-                    <li>
-                        <span class="example__en">{{ ex.en }}</span>
-                        <span class="example__ru">{{ ex.ru }}</span>
-                    </li>
-                    {% endfor %}
-                </ul>
-                {% endif %}
-            </div>
-            {% endfor %}
-        </div>
-        {% endif %}
-
-        {% if result.uses %}
-        <div class="card">
-            <h3 class="card__title">Применения</h3>
-            {% if result.pattern %}
-            <p class="construction__pattern font-mono">{{ result.pattern }}</p>
-            {% endif %}
-            {% for use in result.uses %}
-            <div class="meaning">
-                <div class="meaning__header">
-                    <span class="meaning__num">{{ forloop.counter }}</span>
-                    <span class="meaning__ru">{{ use.ru }}</span>
-                    {% if use.context %}
-                    <span class="meaning__context">{{ use.context }}</span>
-                    {% endif %}
-                </div>
-                {% if use.examples %}
-                <ul class="meaning__examples">
-                    {% for ex in use.examples %}
-                    <li>
-                        <span class="example__en">{{ ex.en }}</span>
-                        <span class="example__ru">{{ ex.ru }}</span>
-                    </li>
-                    {% endfor %}
-                </ul>
-                {% endif %}
-            </div>
-            {% endfor %}
-        </div>
-        {% endif %}
-
-        {% if result.slots %}
-        <div class="card">
-            <h3 class="card__title">Слоты конструкции</h3>
-            {% for slot in result.slots %}
-            <div class="slot">
-                <strong class="slot__name">{{ slot.name }}</strong>
-                <p class="slot__desc">{{ slot.description }}</p>
-                <div class="tags">
-                    {% for ex in slot.examples %}
-                    <span class="tag">{{ ex }}</span>
-                    {% endfor %}
-                </div>
-            </div>
-            {% endfor %}
-        </div>
-        {% endif %}
-
-        {% if result.collocations %}
-        <div class="card">
-            <h3 class="card__title">Словосочетания</h3>
-            <div class="tags">
-                {% for col in result.collocations %}
-                <span class="tag">{{ col }}</span>
-                {% endfor %}
-            </div>
-        </div>
-        {% endif %}
-
-        {% if result.synonyms_by_level %}
-        <div class="card">
-            <h3 class="card__title">Синонимы</h3>
-            {% for group in result.synonyms_by_level %}
-            <div class="synonym-group">
-                <span class="badge badge--cefr">{{ group.level }}</span>
-                <div class="tags">
-                    {% for syn in group.synonyms %}
-                    <span class="tag">{{ syn }}</span>
-                    {% endfor %}
-                </div>
-            </div>
-            {% endfor %}
-        </div>
-        {% endif %}
-
-        {% if result.word_family %}
-        <div class="card">
-            <h3 class="card__title">Семейство слов</h3>
-            <div class="tags">
-                {% for w in result.word_family %}
-                <span class="tag">{{ w }}</span>
-                {% endfor %}
-            </div>
-        </div>
-        {% endif %}
-
-        {% if result.variations %}
-        <div class="card">
-            <h3 class="card__title">Вариации</h3>
-            {% for var in result.variations %}
-            <div class="variation">
-                <code class="variation__pattern">{{ var.pattern }}</code>
-                <span class="variation__note">{{ var.note }}</span>
-            </div>
-            {% endfor %}
-        </div>
-        {% endif %}
     </div>
     {% elif error %}
     <div class="card dictionary__error">
