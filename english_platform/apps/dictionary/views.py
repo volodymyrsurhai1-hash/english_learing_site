@@ -6,6 +6,7 @@ from django.shortcuts import redirect
 from django.views import View
 from django.views.generic import TemplateView
 
+from apps.dictionary.presenters import CuratedDictionaryEntry, DictionaryPresenter
 from apps.dictionary.services import (
     delete_word_for_user,
     get_or_generate_word,
@@ -36,20 +37,11 @@ class SearchView(TemplateView):
                 try:
                     result: dict[str, Any] = get_or_generate_word(query)
                     context["result"] = result
-
-                    primary_trans: str = ""
-                    meanings: list[Any] = result.get("meanings", [])
-                    uses: list[Any] = result.get("uses", [])
-                    if (
-                        meanings
-                        and isinstance(meanings, list)
-                        and isinstance(meanings[0], dict)
-                    ):
-                        primary_trans = str(meanings[0].get("ru", "")).strip()
-                    elif uses and isinstance(uses, list) and isinstance(uses[0], dict):
-                        primary_trans = str(uses[0].get("ru", "")).strip()
-
-                    context["primary_translation"] = primary_trans
+                    entry: CuratedDictionaryEntry = DictionaryPresenter.present(
+                        result, query
+                    )
+                    context["entry"] = entry
+                    context["primary_translation"] = entry.primary_translation
 
                     if self.request.user.is_authenticated:
                         context["is_saved"] = is_word_saved(query, self.request.user)
