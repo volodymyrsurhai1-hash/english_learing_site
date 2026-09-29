@@ -5,7 +5,7 @@
 {% block page_title %}🎬 {{ film.title }}{% endblock %}
 
 {% block extra_css %}
-<link rel="stylesheet" href="{% static 'css/films.css' %}?v=4">
+<link rel="stylesheet" href="{% static 'css/films.css' %}?v=5">
 {% endblock %}
 
 {% block content %}
@@ -294,6 +294,421 @@
         popup.style.top = Math.round(top) + 'px';
     }
 
+    function createPopupHeader(data, canonicalWord, onClose) {
+        const headerEl = document.createElement('div');
+        headerEl.className = 'word-popup__header';
+
+        const titleRow = document.createElement('div');
+        titleRow.className = 'word-popup__title-row';
+
+        const titleWrap = document.createElement('div');
+        titleWrap.className = 'word-popup__title-wrap';
+
+        const titleEl = document.createElement('h3');
+        titleEl.className = 'word-popup__word';
+        titleEl.textContent = canonicalWord;
+        titleWrap.appendChild(titleEl);
+
+        if ('speechSynthesis' in window) {
+            const audioBtn = document.createElement('button');
+            audioBtn.type = 'button';
+            audioBtn.className = 'word-popup__audio-btn';
+            audioBtn.setAttribute('aria-label', 'Listen pronunciation');
+            audioBtn.setAttribute('title', 'Прослушать произношение');
+            audioBtn.innerHTML = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path><path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path></svg>';
+            audioBtn.addEventListener('click', function (ev) {
+                ev.stopPropagation();
+                window.speechSynthesis.cancel();
+                const utterance = new SpeechSynthesisUtterance(canonicalWord);
+                utterance.lang = 'en-US';
+                utterance.rate = 0.9;
+                audioBtn.classList.add('word-popup__audio-btn--playing');
+                utterance.onend = function () {
+                    audioBtn.classList.remove('word-popup__audio-btn--playing');
+                };
+                utterance.onerror = function () {
+                    audioBtn.classList.remove('word-popup__audio-btn--playing');
+                };
+                window.speechSynthesis.speak(utterance);
+            });
+            titleWrap.appendChild(audioBtn);
+        }
+
+        titleRow.appendChild(titleWrap);
+
+        const closeBtn = document.createElement('button');
+        closeBtn.type = 'button';
+        closeBtn.className = 'word-popup__close-btn';
+        closeBtn.innerHTML = '&times;';
+        closeBtn.setAttribute('aria-label', 'Close');
+        closeBtn.addEventListener('click', function (ev) {
+            ev.stopPropagation();
+            onClose();
+        });
+        titleRow.appendChild(closeBtn);
+        headerEl.appendChild(titleRow);
+
+        const badgesEl = document.createElement('div');
+        badgesEl.className = 'word-popup__badges';
+
+        if (data.transcription) {
+            const trEl = document.createElement('span');
+            trEl.className = 'word-popup__badge word-popup__badge--mono';
+            trEl.textContent = data.transcription;
+            badgesEl.appendChild(trEl);
+        }
+        if (data.part_of_speech) {
+            const posEl = document.createElement('span');
+            posEl.className = 'word-popup__badge word-popup__badge--pos';
+            posEl.textContent = data.part_of_speech;
+            badgesEl.appendChild(posEl);
+        }
+        if (data.cefr) {
+            const cefrEl = document.createElement('span');
+            cefrEl.className = 'word-popup__badge word-popup__badge--cefr';
+            cefrEl.textContent = data.cefr;
+            badgesEl.appendChild(cefrEl);
+        }
+        if (data.frequency) {
+            const freqEl = document.createElement('span');
+            freqEl.className = 'word-popup__badge word-popup__badge--freq';
+            freqEl.textContent = '★ ' + data.frequency;
+            badgesEl.appendChild(freqEl);
+        }
+        if (data.style) {
+            const styleEl = document.createElement('span');
+            styleEl.className = 'word-popup__badge word-popup__badge--style';
+            styleEl.textContent = data.style;
+            badgesEl.appendChild(styleEl);
+        }
+
+        if (badgesEl.childNodes.length > 0) {
+            headerEl.appendChild(badgesEl);
+        }
+
+        return headerEl;
+    }
+
+    function createPopupHero(data) {
+        const heroEl = document.createElement('div');
+        heroEl.className = 'word-popup__hero';
+
+        const transEl = document.createElement('div');
+        transEl.className = 'word-popup__hero-trans';
+        transEl.textContent = data.translation;
+        heroEl.appendChild(transEl);
+
+        if (data.pattern) {
+            const patEl = document.createElement('div');
+            patEl.className = 'word-popup__pattern font-mono';
+            patEl.textContent = data.pattern;
+            heroEl.appendChild(patEl);
+        }
+
+        const definition = data.english_definition || data.what_it_means;
+        if (definition) {
+            const defEl = document.createElement('div');
+            defEl.className = 'word-popup__definition';
+            defEl.textContent = definition;
+            heroEl.appendChild(defEl);
+        }
+
+        if (data.english_definition && data.what_it_means && data.english_definition !== data.what_it_means) {
+            const whatEl = document.createElement('div');
+            whatEl.className = 'word-popup__what-means';
+            whatEl.textContent = data.what_it_means;
+            heroEl.appendChild(whatEl);
+        }
+
+        return heroEl;
+    }
+
+    function createPopupMeanings(data) {
+        const meaningList = (data.meanings && data.meanings.length) ? data.meanings : (data.uses || []);
+        if (!meaningList || meaningList.length === 0) {
+            return null;
+        }
+
+        const secEl = document.createElement('div');
+        secEl.className = 'word-popup__section';
+
+        const secTitle = document.createElement('div');
+        secTitle.className = 'word-popup__section-title';
+        secTitle.innerHTML = '<span class="word-popup__section-icon">📖</span> Значения и контекст';
+        secEl.appendChild(secTitle);
+
+        meaningList.slice(0, 3).forEach(function (m, idx) {
+            const item = document.createElement('div');
+            item.className = 'word-popup__sense-item';
+
+            const row = document.createElement('div');
+            row.className = 'word-popup__sense-row';
+
+            const num = document.createElement('span');
+            num.className = 'word-popup__sense-num';
+            num.textContent = (idx + 1) + '.';
+            row.appendChild(num);
+
+            const ru = document.createElement('span');
+            ru.className = 'word-popup__sense-ru';
+            ru.textContent = m.ru || '';
+            row.appendChild(ru);
+
+            if (m.context) {
+                const ctx = document.createElement('span');
+                ctx.className = 'word-popup__context-tag';
+                ctx.textContent = m.context;
+                row.appendChild(ctx);
+            }
+            item.appendChild(row);
+
+            if (m.examples && m.examples.length > 0) {
+                const ex = m.examples[0];
+                const exBox = document.createElement('div');
+                exBox.className = 'word-popup__example';
+
+                const exEn = document.createElement('div');
+                exEn.className = 'word-popup__example-en';
+                exEn.textContent = ex.en;
+                exBox.appendChild(exEn);
+
+                if (ex.ru) {
+                    const exRu = document.createElement('div');
+                    exRu.className = 'word-popup__example-ru';
+                    exRu.textContent = ex.ru;
+                    exBox.appendChild(exRu);
+                }
+
+                if (ex.tag) {
+                    const exTag = document.createElement('span');
+                    exTag.className = 'word-popup__example-tag';
+                    exTag.textContent = ex.tag;
+                    exBox.appendChild(exTag);
+                }
+
+                item.appendChild(exBox);
+            }
+
+            secEl.appendChild(item);
+        });
+
+        return secEl;
+    }
+
+    function createPopupStructure(data) {
+        const hasSlots = Array.isArray(data.slots) && data.slots.length > 0;
+        const hasVars = Array.isArray(data.variations) && data.variations.length > 0;
+        if (!hasSlots && !hasVars) {
+            return null;
+        }
+
+        const secEl = document.createElement('div');
+        secEl.className = 'word-popup__section';
+
+        const secTitle = document.createElement('div');
+        secTitle.className = 'word-popup__section-title';
+        secTitle.innerHTML = '<span class="word-popup__section-icon">🧩</span> Структура и слоты';
+        secEl.appendChild(secTitle);
+
+        if (hasSlots) {
+            data.slots.slice(0, 3).forEach(function (slot) {
+                const slotBox = document.createElement('div');
+                slotBox.className = 'word-popup__slot-box';
+
+                const header = document.createElement('div');
+                header.className = 'word-popup__slot-header';
+
+                const name = document.createElement('span');
+                name.className = 'word-popup__slot-name font-mono';
+                name.textContent = slot.name;
+                header.appendChild(name);
+
+                if (slot.description) {
+                    const desc = document.createElement('span');
+                    desc.className = 'word-popup__slot-desc';
+                    desc.textContent = slot.description;
+                    header.appendChild(desc);
+                }
+                slotBox.appendChild(header);
+
+                if (Array.isArray(slot.examples) && slot.examples.length > 0) {
+                    const exWrap = document.createElement('div');
+                    exWrap.className = 'word-popup__tags';
+                    slot.examples.slice(0, 4).forEach(function (exWord) {
+                        const tag = document.createElement('span');
+                        tag.className = 'word-popup__tag word-popup__tag--sm';
+                        tag.textContent = exWord;
+                        exWrap.appendChild(tag);
+                    });
+                    slotBox.appendChild(exWrap);
+                }
+                secEl.appendChild(slotBox);
+            });
+        }
+
+        if (hasVars) {
+            data.variations.slice(0, 2).forEach(function (v) {
+                const vBox = document.createElement('div');
+                vBox.className = 'word-popup__var-box';
+
+                const pat = document.createElement('code');
+                pat.className = 'word-popup__var-pattern';
+                pat.textContent = v.pattern;
+                vBox.appendChild(pat);
+
+                if (v.note) {
+                    const note = document.createElement('span');
+                    note.className = 'word-popup__var-note';
+                    note.textContent = v.note;
+                    vBox.appendChild(note);
+                }
+                secEl.appendChild(vBox);
+            });
+        }
+
+        return secEl;
+    }
+
+    function createPopupLexical(data) {
+        const hasCollocations = Array.isArray(data.collocations) && data.collocations.length > 0;
+        let synsByLevel = [];
+        if (Array.isArray(data.synonyms_by_level) && data.synonyms_by_level.length > 0) {
+            data.synonyms_by_level.forEach(function (grp) {
+                if (grp.synonyms && Array.isArray(grp.synonyms) && grp.synonyms.length > 0) {
+                    synsByLevel.push({
+                        level: grp.level || '',
+                        synonyms: grp.synonyms.slice(0, 4)
+                    });
+                }
+            });
+        }
+        const hasSynonyms = synsByLevel.length > 0;
+        const hasFamily = Array.isArray(data.word_family) && data.word_family.length > 0;
+
+        if (!hasCollocations && !hasSynonyms && !hasFamily) {
+            return null;
+        }
+
+        const secEl = document.createElement('div');
+        secEl.className = 'word-popup__section';
+
+        const secTitle = document.createElement('div');
+        secTitle.className = 'word-popup__section-title';
+        secTitle.innerHTML = '<span class="word-popup__section-icon">🔗</span> Лексические связи';
+        secEl.appendChild(secTitle);
+
+        if (hasCollocations) {
+            const grpEl = document.createElement('div');
+            grpEl.className = 'word-popup__subgroup';
+
+            const subTitle = document.createElement('div');
+            subTitle.className = 'word-popup__subgroup-title';
+            subTitle.textContent = 'Устойчивые фразы';
+            grpEl.appendChild(subTitle);
+
+            const tagsWrap = document.createElement('div');
+            tagsWrap.className = 'word-popup__tags';
+            data.collocations.slice(0, 5).forEach(function (c) {
+                const tag = document.createElement('span');
+                tag.className = 'word-popup__tag';
+                tag.textContent = c;
+                tagsWrap.appendChild(tag);
+            });
+            grpEl.appendChild(tagsWrap);
+            secEl.appendChild(grpEl);
+        }
+
+        if (hasSynonyms) {
+            const grpEl = document.createElement('div');
+            grpEl.className = 'word-popup__subgroup';
+
+            const subTitle = document.createElement('div');
+            subTitle.className = 'word-popup__subgroup-title';
+            subTitle.textContent = 'Синонимы';
+            grpEl.appendChild(subTitle);
+
+            const synList = document.createElement('div');
+            synList.className = 'word-popup__syn-groups';
+
+            synsByLevel.slice(0, 3).forEach(function (grp) {
+                const row = document.createElement('div');
+                row.className = 'word-popup__syn-row';
+
+                if (grp.level) {
+                    const lvl = document.createElement('span');
+                    lvl.className = 'word-popup__syn-level';
+                    lvl.textContent = grp.level;
+                    row.appendChild(lvl);
+                }
+
+                const tagsWrap = document.createElement('div');
+                tagsWrap.className = 'word-popup__tags';
+                grp.synonyms.forEach(function (s) {
+                    const tag = document.createElement('span');
+                    tag.className = 'word-popup__tag word-popup__tag--syn';
+                    tag.textContent = s;
+                    tagsWrap.appendChild(tag);
+                });
+                row.appendChild(tagsWrap);
+                synList.appendChild(row);
+            });
+
+            grpEl.appendChild(synList);
+            secEl.appendChild(grpEl);
+        }
+
+        if (hasFamily) {
+            const grpEl = document.createElement('div');
+            grpEl.className = 'word-popup__subgroup';
+
+            const subTitle = document.createElement('div');
+            subTitle.className = 'word-popup__subgroup-title';
+            subTitle.textContent = 'Формы слова';
+            grpEl.appendChild(subTitle);
+
+            const famTags = document.createElement('div');
+            famTags.className = 'word-popup__tags';
+            data.word_family.slice(0, 6).forEach(function (f) {
+                const tag = document.createElement('span');
+                tag.className = 'word-popup__tag word-popup__tag--family';
+                tag.textContent = f;
+                famTags.appendChild(tag);
+            });
+            grpEl.appendChild(famTags);
+            secEl.appendChild(grpEl);
+        }
+
+        return secEl;
+    }
+
+    function createPopupFooter(data, canonicalWord, onSaveWord) {
+        const footerEl = document.createElement('div');
+        footerEl.className = 'word-popup__footer';
+
+        const saveBtn = document.createElement('button');
+        saveBtn.className = 'word-popup__save-btn';
+        saveBtn.type = 'button';
+        if (data.is_saved) {
+            saveBtn.textContent = '✓ Сохранено в словарь';
+            saveBtn.classList.add('word-popup__save-btn--saved');
+        } else {
+            saveBtn.textContent = '🔖 Добавить в словарь';
+            saveBtn.addEventListener('click', function () {
+                onSaveWord(canonicalWord, saveBtn);
+            });
+        }
+        footerEl.appendChild(saveBtn);
+
+        const dictLink = document.createElement('a');
+        dictLink.className = 'word-popup__dict-link';
+        dictLink.href = '/?q=' + encodeURIComponent(canonicalWord);
+        dictLink.target = '_blank';
+        dictLink.textContent = '📖 Полный разбор в словаре ↗';
+        footerEl.appendChild(dictLink);
+
+        return footerEl;
+    }
+
     function onWordClick(e) {
         e.stopPropagation();
         video.pause();
@@ -314,36 +729,6 @@
 
         popupEl = document.createElement('div');
         popupEl.className = 'word-popup';
-
-        const headerEl = document.createElement('div');
-        headerEl.className = 'word-popup__header';
-
-        const titleRow = document.createElement('div');
-        titleRow.className = 'word-popup__title-row';
-
-        const titleWrap = document.createElement('div');
-        titleWrap.className = 'word-popup__title-wrap';
-
-        const titleEl = document.createElement('h3');
-        titleEl.className = 'word-popup__word';
-        titleEl.textContent = word;
-        titleWrap.appendChild(titleEl);
-
-        titleRow.appendChild(titleWrap);
-
-        const closeBtn = document.createElement('button');
-        closeBtn.type = 'button';
-        closeBtn.className = 'word-popup__close-btn';
-        closeBtn.innerHTML = '&times;';
-        closeBtn.setAttribute('aria-label', 'Close');
-        closeBtn.addEventListener('click', function (ev) {
-            ev.stopPropagation();
-            closeWordPopup();
-        });
-        titleRow.appendChild(closeBtn);
-        headerEl.appendChild(titleRow);
-
-        popupEl.appendChild(headerEl);
 
         const statusEl = document.createElement('div');
         statusEl.className = 'word-popup__loading';
@@ -376,6 +761,9 @@
                     !resp.data.translation ||
                     resp.data.translation === 'No translation'
                 ) {
+                    const headerEl = createPopupHeader({}, word, closeWordPopup);
+                    popupEl.appendChild(headerEl);
+
                     const errEl = document.createElement('div');
                     errEl.className = 'word-popup__error';
                     errEl.textContent =
@@ -389,264 +777,38 @@
 
                 const data = resp.data;
                 const canonicalWord = data.english || word;
-                titleEl.textContent = canonicalWord;
 
-                if ('speechSynthesis' in window) {
-                    const audioBtn = document.createElement('button');
-                    audioBtn.type = 'button';
-                    audioBtn.className = 'word-popup__audio-btn';
-                    audioBtn.setAttribute('aria-label', 'Listen pronunciation');
-                    audioBtn.setAttribute('title', 'Прослушать произношение');
-                    audioBtn.innerHTML = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path><path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path></svg>';
-                    audioBtn.addEventListener('click', function (ev) {
-                        ev.stopPropagation();
-                        window.speechSynthesis.cancel();
-                        const utterance = new SpeechSynthesisUtterance(canonicalWord);
-                        utterance.lang = 'en-US';
-                        utterance.rate = 0.9;
-                        audioBtn.classList.add('word-popup__audio-btn--playing');
-                        utterance.onend = function () {
-                            audioBtn.classList.remove('word-popup__audio-btn--playing');
-                        };
-                        utterance.onerror = function () {
-                            audioBtn.classList.remove('word-popup__audio-btn--playing');
-                        };
-                        window.speechSynthesis.speak(utterance);
-                    });
-                    titleWrap.appendChild(audioBtn);
-                }
-
-                const metaEl = document.createElement('div');
-                metaEl.className = 'word-popup__meta';
-
-                if (data.transcription) {
-                    const trEl = document.createElement('span');
-                    trEl.className = 'word-popup__transcription font-mono';
-                    trEl.textContent = data.transcription;
-                    metaEl.appendChild(trEl);
-                }
-                if (data.cefr) {
-                    const badgeEl = document.createElement('span');
-                    badgeEl.className = 'badge badge--cefr';
-                    badgeEl.textContent = data.cefr;
-                    metaEl.appendChild(badgeEl);
-                }
-                if (data.part_of_speech) {
-                    const posEl = document.createElement('span');
-                    posEl.className = 'badge word-popup__pos-badge';
-                    posEl.textContent = data.part_of_speech;
-                    metaEl.appendChild(posEl);
-                }
-                if (data.style) {
-                    const styleEl = document.createElement('span');
-                    styleEl.className = 'badge word-popup__style-badge';
-                    styleEl.textContent = data.style;
-                    metaEl.appendChild(styleEl);
-                }
-                if (data.frequency) {
-                    const freqEl = document.createElement('span');
-                    freqEl.className = 'badge word-popup__freq-badge';
-                    freqEl.textContent = '★ ' + data.frequency;
-                    metaEl.appendChild(freqEl);
-                }
-                if (metaEl.childNodes.length > 0) {
-                    headerEl.appendChild(metaEl);
-                }
+                const headerEl = createPopupHeader(data, canonicalWord, closeWordPopup);
+                popupEl.appendChild(headerEl);
 
                 const bodyEl = document.createElement('div');
                 bodyEl.className = 'word-popup__body';
 
-                const transEl = document.createElement('div');
-                transEl.className = 'word-popup__translation';
-                transEl.textContent = data.translation;
-                bodyEl.appendChild(transEl);
-
-                if (data.english_definition) {
-                    const defEl = document.createElement('div');
-                    defEl.className = 'word-popup__definition';
-                    defEl.textContent = data.english_definition;
-                    bodyEl.appendChild(defEl);
+                const heroEl = createPopupHero(data);
+                if (heroEl) {
+                    bodyEl.appendChild(heroEl);
                 }
 
-                if (data.pattern) {
-                    const patEl = document.createElement('div');
-                    patEl.className = 'word-popup__pattern font-mono';
-                    patEl.textContent = data.pattern;
-                    bodyEl.appendChild(patEl);
+                const meaningsSec = createPopupMeanings(data);
+                if (meaningsSec) {
+                    bodyEl.appendChild(meaningsSec);
                 }
 
-                if (data.what_it_means) {
-                    const whatEl = document.createElement('div');
-                    whatEl.className = 'word-popup__what-means';
-                    whatEl.textContent = data.what_it_means;
-                    bodyEl.appendChild(whatEl);
+                const structureSec = createPopupStructure(data);
+                if (structureSec) {
+                    bodyEl.appendChild(structureSec);
                 }
 
-                const meaningList = (data.meanings && data.meanings.length) ? data.meanings : (data.uses || []);
-                if (meaningList && meaningList.length > 0) {
-                    const secEl = document.createElement('div');
-                    secEl.className = 'word-popup__section';
-
-                    const secTitle = document.createElement('div');
-                    secTitle.className = 'word-popup__section-title';
-                    secTitle.textContent = data.entry_type === 'construction' ? 'Применения' : 'Значения и примеры';
-                    secEl.appendChild(secTitle);
-
-                    meaningList.slice(0, 3).forEach(function (m, idx) {
-                        const mItem = document.createElement('div');
-                        mItem.className = 'word-popup__meaning-item';
-
-                        const mRow = document.createElement('div');
-                        mRow.className = 'word-popup__meaning-row';
-
-                        const num = document.createElement('span');
-                        num.className = 'word-popup__meaning-num';
-                        num.textContent = (idx + 1) + '.';
-                        mRow.appendChild(num);
-
-                        const ruText = document.createElement('span');
-                        ruText.className = 'word-popup__meaning-ru';
-                        ruText.textContent = m.ru || '';
-                        mRow.appendChild(ruText);
-
-                        if (m.context) {
-                            const ctx = document.createElement('span');
-                            ctx.className = 'word-popup__context-tag';
-                            ctx.textContent = m.context;
-                            mRow.appendChild(ctx);
-                        }
-                        mItem.appendChild(mRow);
-
-                        if (m.examples && m.examples.length > 0) {
-                            const ex = m.examples[0];
-                            const exBox = document.createElement('div');
-                            exBox.className = 'word-popup__example';
-
-                            const exEn = document.createElement('div');
-                            exEn.className = 'word-popup__example-en';
-                            exEn.textContent = ex.en;
-                            exBox.appendChild(exEn);
-
-                            if (ex.ru) {
-                                const exRu = document.createElement('div');
-                                exRu.className = 'word-popup__example-ru';
-                                exRu.textContent = ex.ru;
-                                exBox.appendChild(exRu);
-                            }
-                            mItem.appendChild(exBox);
-                        }
-
-                        secEl.appendChild(mItem);
-                    });
-
-                    bodyEl.appendChild(secEl);
+                const lexicalSec = createPopupLexical(data);
+                if (lexicalSec) {
+                    bodyEl.appendChild(lexicalSec);
                 }
 
-                if (data.collocations && data.collocations.length > 0) {
-                    const colSec = document.createElement('div');
-                    colSec.className = 'word-popup__section';
-
-                    const colTitle = document.createElement('div');
-                    colTitle.className = 'word-popup__section-title';
-                    colTitle.textContent = 'Словосочетания';
-                    colSec.appendChild(colTitle);
-
-                    const tagsWrap = document.createElement('div');
-                    tagsWrap.className = 'word-popup__tags';
-
-                    data.collocations.slice(0, 5).forEach(function (c) {
-                        const tag = document.createElement('span');
-                        tag.className = 'word-popup__tag';
-                        tag.textContent = c;
-                        tagsWrap.appendChild(tag);
-                    });
-
-                    colSec.appendChild(tagsWrap);
-                    bodyEl.appendChild(colSec);
+                const footerEl = createPopupFooter(data, canonicalWord, saveWordToVocab);
+                if (footerEl) {
+                    bodyEl.appendChild(footerEl);
                 }
 
-                let syns = [];
-                if (data.synonyms_by_level && data.synonyms_by_level.length > 0) {
-                    data.synonyms_by_level.forEach(function (grp) {
-                        if (grp.synonyms && Array.isArray(grp.synonyms)) {
-                            grp.synonyms.forEach(function (s) {
-                                if (!syns.includes(s) && syns.length < 5) {
-                                    syns.push(s);
-                                }
-                            });
-                        }
-                    });
-                }
-
-                if (syns.length > 0) {
-                    const synSec = document.createElement('div');
-                    synSec.className = 'word-popup__section';
-
-                    const synTitle = document.createElement('div');
-                    synTitle.className = 'word-popup__section-title';
-                    synTitle.textContent = 'Синонимы';
-                    synSec.appendChild(synTitle);
-
-                    const synTags = document.createElement('div');
-                    synTags.className = 'word-popup__tags';
-
-                    syns.forEach(function (s) {
-                        const tag = document.createElement('span');
-                        tag.className = 'word-popup__tag word-popup__tag--syn';
-                        tag.textContent = s;
-                        synTags.appendChild(tag);
-                    });
-
-                    synSec.appendChild(synTags);
-                    bodyEl.appendChild(synSec);
-                } else if (data.word_family && data.word_family.length > 0) {
-                    const famSec = document.createElement('div');
-                    famSec.className = 'word-popup__section';
-
-                    const famTitle = document.createElement('div');
-                    famTitle.className = 'word-popup__section-title';
-                    famTitle.textContent = 'Формы слова';
-                    famSec.appendChild(famTitle);
-
-                    const famTags = document.createElement('div');
-                    famTags.className = 'word-popup__tags';
-
-                    data.word_family.slice(0, 5).forEach(function (f) {
-                        const tag = document.createElement('span');
-                        tag.className = 'word-popup__tag';
-                        tag.textContent = f;
-                        famTags.appendChild(tag);
-                    });
-
-                    famSec.appendChild(famTags);
-                    bodyEl.appendChild(famSec);
-                }
-
-                const footerEl = document.createElement('div');
-                footerEl.className = 'word-popup__footer';
-
-                const saveBtn = document.createElement('button');
-                saveBtn.className = 'word-popup__save-btn';
-                saveBtn.type = 'button';
-                if (data.is_saved) {
-                    saveBtn.textContent = '✅ Сохранено в словарь';
-                    saveBtn.classList.add('word-popup__save-btn--saved');
-                } else {
-                    saveBtn.textContent = '🔖 Добавить в словарь';
-                    saveBtn.addEventListener('click', function () {
-                        saveWordToVocab(canonicalWord, saveBtn);
-                    });
-                }
-                footerEl.appendChild(saveBtn);
-
-                const dictLink = document.createElement('a');
-                dictLink.className = 'word-popup__dict-link';
-                dictLink.href = '/?q=' + encodeURIComponent(canonicalWord);
-                dictLink.target = '_blank';
-                dictLink.textContent = '📖 Полный разбор в словаре ↗';
-                footerEl.appendChild(dictLink);
-
-                bodyEl.appendChild(footerEl);
                 popupEl.appendChild(bodyEl);
 
                 requestAnimationFrame(function () {

@@ -274,6 +274,8 @@ class TranslateWordView(View):
             "what_it_means": data.get("what_it_means", ""),
             "meanings": data.get("meanings", []),
             "uses": data.get("uses", []),
+            "slots": data.get("slots", []),
+            "variations": data.get("variations", []),
             "collocations": data.get("collocations", []),
             "synonyms_by_level": data.get("synonyms_by_level", []),
             "word_family": data.get("word_family", []),
