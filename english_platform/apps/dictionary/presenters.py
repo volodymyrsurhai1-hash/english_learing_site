@@ -100,6 +100,11 @@ class DictionaryPresenter:
         elif result.get("what_it_means"):
             primary_translation = str(result.get("what_it_means") or "").strip()
 
+        if len(primary_translation) > 100 and "." in primary_translation:
+            first_sentence: str = primary_translation.split(".")[0].strip()
+            if len(first_sentence) >= 10:
+                primary_translation = first_sentence
+
         what_it_means_raw: Optional[str] = result.get("what_it_means")
         what_it_means: Optional[str] = None
         if what_it_means_raw:
@@ -129,6 +134,10 @@ class DictionaryPresenter:
                     if isinstance(ex, dict):
                         en_val: str = str(ex.get("en") or "").strip()
                         ru_val: str = str(ex.get("ru") or "").strip()
+                        if " - " in en_val and any(
+                            "\u0400" <= c <= "\u04ff" for c in en_val.split(" - ", 1)[1]
+                        ):
+                            en_val = en_val.split(" - ", 1)[0].strip()
                         if en_val:
                             curated_examples.append(
                                 CuratedExample(en=en_val, ru=ru_val)

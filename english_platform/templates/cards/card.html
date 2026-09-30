@@ -16,7 +16,7 @@
     </div>
 
     <div class="flashcard flashcard--large" id="flashcard">
-        <div class="flashcard__front">
+        <div class="flashcard__front" id="flashcard-front">
             <div class="flashcard__word">{{ entry.english }}</div>
             <div class="flashcard__meta">
                 {% if entry.transcription %}
@@ -40,15 +40,31 @@
             <div class="flashcard__pattern-preview font-mono">{{ entry.pattern }}</div>
             {% endif %}
 
-            <span class="flashcard__hint">Нажмите карточку или Пробел, чтобы увидеть перевод</span>
+            <div class="flashcard__hint">
+                <span>⌨ Нажмите карточку или Пробел</span>
+            </div>
         </div>
 
         <div class="flashcard__back" id="flashcard-back">
-            <div class="flashcard__primary-ru">{{ entry.primary_translation }}</div>
+            <div class="flashcard__back-header">
+                <div class="flashcard__back-word">{{ entry.english }}</div>
+                <div class="flashcard__meta">
+                    {% if entry.transcription %}
+                    <span class="flashcard__transcription font-mono">{{ entry.transcription }}</span>
+                    {% endif %}
+                    {% if entry.cefr %}
+                    <span class="badge badge--cefr">{{ entry.cefr }}</span>
+                    {% endif %}
+                </div>
+            </div>
 
-            {% if entry.english_definition %}
-            <div class="flashcard__en-def">{{ entry.english_definition }}</div>
-            {% endif %}
+            <div class="flashcard__primary-box">
+                <div class="flashcard__primary-label">Перевод</div>
+                <div class="flashcard__primary-ru">{{ entry.primary_translation }}</div>
+                {% if entry.english_definition and entry.english_definition != entry.english %}
+                <div class="flashcard__en-def">{{ entry.english_definition }}</div>
+                {% endif %}
+            </div>
 
             {% if entry.pattern %}
             <div class="flashcard__formula-box">
@@ -65,66 +81,24 @@
             {% endif %}
 
             {% if entry.senses %}
-            <div class="flashcard__senses">
+            <div class="flashcard__examples-box">
+                <div class="flashcard__box-title">Примеры в речи</div>
                 {% for sense in entry.senses|slice:":2" %}
-                <div class="flashcard__sense">
-                    {% if sense.show_header and sense.ru != entry.primary_translation %}
-                    <div class="flashcard__sense-head">
-                        <span class="flashcard__sense-ru">{{ sense.ru }}</span>
-                        {% if sense.context %}
-                        <span class="flashcard__sense-context">{{ sense.context }}</span>
+                    {% for ex in sense.examples|slice:":1" %}
+                    <div class="flashcard__example-bubble">
+                        <div class="flashcard__example-en">{{ ex.en }}</div>
+                        {% if ex.ru and ex.ru != ex.en %}
+                        <div class="flashcard__example-ru">{{ ex.ru }}</div>
                         {% endif %}
                     </div>
-                    {% elif sense.context %}
-                    <div class="flashcard__sense-head">
-                        <span class="flashcard__sense-context">{{ sense.context }}</span>
-                    </div>
-                    {% endif %}
-
-                    {% if sense.examples %}
-                    <div class="flashcard__examples">
-                        {% for ex in sense.examples|slice:":2" %}
-                        <div class="flashcard__example-item">
-                            <div class="flashcard__example-en">{{ ex.en }}</div>
-                            {% if ex.ru %}
-                            <div class="flashcard__example-ru">{{ ex.ru }}</div>
-                            {% endif %}
-                        </div>
-                        {% endfor %}
-                    </div>
-                    {% endif %}
-                </div>
+                    {% endfor %}
                 {% endfor %}
             </div>
             {% endif %}
 
-            {% if entry.slots %}
-            <div class="flashcard__section">
-                <div class="flashcard__section-label">Слоты конструкции:</div>
-                <div class="flashcard__slots-grid">
-                    {% for slot in entry.slots|slice:":3" %}
-                    <div class="flashcard__slot-mini">
-                        <div class="flashcard__slot-mini-token font-mono">[{{ slot.name }}]</div>
-                        {% if slot.grammatical_form %}
-                        <span class="flashcard__slot-mini-pos">{{ slot.grammatical_form }}</span>
-                        {% endif %}
-                        <div class="flashcard__slot-mini-desc">{{ slot.description }}</div>
-                        {% if slot.tokens %}
-                        <div class="flashcard__slot-mini-tokens">
-                            {% for tok in slot.tokens|slice:":3" %}
-                            <span class="flashcard__chip-sm">{{ tok }}</span>
-                            {% endfor %}
-                        </div>
-                        {% endif %}
-                    </div>
-                    {% endfor %}
-                </div>
-            </div>
-            {% endif %}
-
             {% if entry.collocations %}
-            <div class="flashcard__section">
-                <div class="flashcard__section-label">Частые сочетания:</div>
+            <div class="flashcard__collocations-box">
+                <div class="flashcard__box-title">Частые сочетания</div>
                 <div class="flashcard__chips">
                     {% for col in entry.collocations|slice:":4" %}
                     <span class="flashcard__chip">{{ col }}</span>
@@ -138,11 +112,13 @@
     <div class="flashcard__actions" id="flashcard-actions">
         {% if next_pk %}
         <a href="{% url 'cards:card' next_pk %}" class="btn flashcard__btn flashcard__btn--skip" id="btn-skip">
-            → Дальше <span class="flashcard__kbd font-mono">1</span>
+            <span>→ Дальше</span>
+            <kbd class="flashcard__kbd font-mono">1</kbd>
         </a>
         {% else %}
         <a href="{% url 'cards:index' %}" class="btn flashcard__btn flashcard__btn--skip" id="btn-skip">
-            → Дальше <span class="flashcard__kbd font-mono">1</span>
+            <span>→ Дальше</span>
+            <kbd class="flashcard__kbd font-mono">1</kbd>
         </a>
         {% endif %}
 
@@ -150,7 +126,8 @@
             {% csrf_token %}
             <input type="hidden" name="next_pk" value="{{ next_pk|default:'' }}">
             <button type="submit" class="btn flashcard__btn flashcard__btn--learned" id="btn-learned">
-                ✓ Знаю это слово <span class="flashcard__kbd font-mono">2</span>
+                <span>✓ Знаю это слово</span>
+                <kbd class="flashcard__kbd font-mono">2</kbd>
             </button>
         </form>
     </div>
@@ -164,6 +141,7 @@
 <script>
     document.addEventListener("DOMContentLoaded", function () {
         const card = document.getElementById("flashcard");
+        const front = document.getElementById("flashcard-front");
         const back = document.getElementById("flashcard-back");
         const actions = document.getElementById("flashcard-actions");
         const btnSkip = document.getElementById("btn-skip");
@@ -174,6 +152,7 @@
 
         function revealCard() {
             if (back.style.display === "none") {
+                front.style.display = "none";
                 back.style.display = "flex";
                 actions.style.display = "flex";
                 card.classList.add("flashcard--revealed");
