@@ -6,6 +6,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.views import View
 
 from apps.dictionary.models import UserWord
+from apps.dictionary.presenters import CuratedDictionaryEntry, DictionaryPresenter
 
 
 class FlashcardRedirectView(LoginRequiredMixin, View):
@@ -51,8 +52,13 @@ class FlashcardView(LoginRequiredMixin, View):
         total_all: int = all_qs.count()
         count_learned: int = all_qs.filter(status="LEARNED").count()
 
+        entry: CuratedDictionaryEntry = DictionaryPresenter.present(
+            current.word.full_translation, current.word.word
+        )
+
         context: dict[str, Any] = {
             "user_word": current,
+            "entry": entry,
             "next_pk": next_pk,
             "count_learned": count_learned,
             "total_all": total_all,

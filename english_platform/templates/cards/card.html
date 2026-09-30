@@ -15,70 +15,142 @@
         <span class="flashcard-progress__label">{{ count_learned }} / {{ total_all }} выучено</span>
     </div>
 
-    <div class="flashcard" id="flashcard">
+    <div class="flashcard flashcard--large" id="flashcard">
         <div class="flashcard__front">
-            <div class="flashcard__word">{{ user_word.word.word }}</div>
+            <div class="flashcard__word">{{ entry.english }}</div>
             <div class="flashcard__meta">
-                {% with t=user_word.word.full_translation %}
-                {% if t.transcription %}
-                <span class="flashcard__transcription font-mono">{{ t.transcription }}</span>
+                {% if entry.transcription %}
+                <span class="flashcard__transcription font-mono">{{ entry.transcription }}</span>
                 {% endif %}
-                {% if t.cefr %}
-                <span class="badge badge--cefr">{{ t.cefr }}</span>
+                {% if entry.cefr %}
+                <span class="badge badge--cefr">{{ entry.cefr }}</span>
                 {% endif %}
-                {% if t.part_of_speech %}
-                <span class="badge">{{ t.part_of_speech }}</span>
+                {% if entry.part_of_speech %}
+                <span class="badge">{{ entry.part_of_speech }}</span>
                 {% endif %}
-                {% endwith %}
+                {% if entry.entry_type == "construction" %}
+                <span class="badge badge--subtle">Конструкция</span>
+                {% endif %}
+                {% if entry.style %}
+                <span class="badge badge--subtle">{{ entry.style }}</span>
+                {% endif %}
             </div>
-            <span class="flashcard__hint">Нажмите, чтобы увидеть перевод</span>
+
+            {% if entry.pattern %}
+            <div class="flashcard__pattern-preview font-mono">{{ entry.pattern }}</div>
+            {% endif %}
+
+            <span class="flashcard__hint">Нажмите карточку или Пробел, чтобы увидеть перевод</span>
         </div>
 
         <div class="flashcard__back" id="flashcard-back">
-            {% with t=user_word.word.full_translation %}
-            {% if t.meanings %}
-            <div class="flashcard__meanings">
-                {% for m in t.meanings|slice:":2" %}
-                <div class="flashcard__meaning">
-                    <p class="flashcard__meaning-ru">{{ m.ru|truncatechars:60 }}</p>
-                    {% if m.examples %}
-                    <p class="flashcard__example">{{ m.examples.0.en }}</p>
-                    {% endif %}
-                </div>
-                {% endfor %}
+            <div class="flashcard__primary-ru">{{ entry.primary_translation }}</div>
+
+            {% if entry.english_definition %}
+            <div class="flashcard__en-def">{{ entry.english_definition }}</div>
+            {% endif %}
+
+            {% if entry.pattern %}
+            <div class="flashcard__formula-box">
+                <span class="flashcard__formula-label">Схема:</span>
+                <code class="flashcard__formula font-mono">{{ entry.pattern }}</code>
             </div>
-            {% elif t.uses %}
-            <div class="flashcard__meanings">
-                {% for u in t.uses|slice:":2" %}
-                <div class="flashcard__meaning">
-                    <p class="flashcard__meaning-ru">{{ u.ru|truncatechars:60 }}</p>
-                    {% if u.examples %}
-                    <p class="flashcard__example">{{ u.examples.0.en }}</p>
+            {% endif %}
+
+            {% if entry.grammar_note %}
+            <div class="flashcard__note-box">
+                <span class="flashcard__note-icon">💡</span>
+                <span class="flashcard__note-text">{{ entry.grammar_note }}</span>
+            </div>
+            {% endif %}
+
+            {% if entry.senses %}
+            <div class="flashcard__senses">
+                {% for sense in entry.senses|slice:":2" %}
+                <div class="flashcard__sense">
+                    {% if sense.show_header and sense.ru != entry.primary_translation %}
+                    <div class="flashcard__sense-head">
+                        <span class="flashcard__sense-ru">{{ sense.ru }}</span>
+                        {% if sense.context %}
+                        <span class="flashcard__sense-context">{{ sense.context }}</span>
+                        {% endif %}
+                    </div>
+                    {% elif sense.context %}
+                    <div class="flashcard__sense-head">
+                        <span class="flashcard__sense-context">{{ sense.context }}</span>
+                    </div>
+                    {% endif %}
+
+                    {% if sense.examples %}
+                    <div class="flashcard__examples">
+                        {% for ex in sense.examples|slice:":2" %}
+                        <div class="flashcard__example-item">
+                            <div class="flashcard__example-en">{{ ex.en }}</div>
+                            {% if ex.ru %}
+                            <div class="flashcard__example-ru">{{ ex.ru }}</div>
+                            {% endif %}
+                        </div>
+                        {% endfor %}
+                    </div>
                     {% endif %}
                 </div>
                 {% endfor %}
             </div>
             {% endif %}
-            {% endwith %}
+
+            {% if entry.slots %}
+            <div class="flashcard__section">
+                <div class="flashcard__section-label">Слоты конструкции:</div>
+                <div class="flashcard__slots-grid">
+                    {% for slot in entry.slots|slice:":3" %}
+                    <div class="flashcard__slot-mini">
+                        <div class="flashcard__slot-mini-token font-mono">[{{ slot.name }}]</div>
+                        {% if slot.grammatical_form %}
+                        <span class="flashcard__slot-mini-pos">{{ slot.grammatical_form }}</span>
+                        {% endif %}
+                        <div class="flashcard__slot-mini-desc">{{ slot.description }}</div>
+                        {% if slot.tokens %}
+                        <div class="flashcard__slot-mini-tokens">
+                            {% for tok in slot.tokens|slice:":3" %}
+                            <span class="flashcard__chip-sm">{{ tok }}</span>
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
+            {% if entry.collocations %}
+            <div class="flashcard__section">
+                <div class="flashcard__section-label">Частые сочетания:</div>
+                <div class="flashcard__chips">
+                    {% for col in entry.collocations|slice:":4" %}
+                    <span class="flashcard__chip">{{ col }}</span>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
         </div>
     </div>
 
     <div class="flashcard__actions" id="flashcard-actions">
         {% if next_pk %}
-        <a href="{% url 'cards:card' next_pk %}" class="btn flashcard__btn flashcard__btn--skip">
-            → Дальше
+        <a href="{% url 'cards:card' next_pk %}" class="btn flashcard__btn flashcard__btn--skip" id="btn-skip">
+            → Дальше <span class="flashcard__kbd font-mono">1</span>
         </a>
         {% else %}
-        <a href="{% url 'cards:index' %}" class="btn flashcard__btn flashcard__btn--skip">
-            → Дальше
+        <a href="{% url 'cards:index' %}" class="btn flashcard__btn flashcard__btn--skip" id="btn-skip">
+            → Дальше <span class="flashcard__kbd font-mono">1</span>
         </a>
         {% endif %}
 
-        <form method="post" action="{% url 'cards:learned' user_word.pk %}">
+        <form method="post" action="{% url 'cards:learned' user_word.pk %}" id="form-learned">
             {% csrf_token %}
             <input type="hidden" name="next_pk" value="{{ next_pk|default:'' }}">
-            <button type="submit" class="btn flashcard__btn flashcard__btn--learned">
-                ✓ Знаю это слово
+            <button type="submit" class="btn flashcard__btn flashcard__btn--learned" id="btn-learned">
+                ✓ Знаю это слово <span class="flashcard__kbd font-mono">2</span>
             </button>
         </form>
     </div>
@@ -94,15 +166,42 @@
         const card = document.getElementById("flashcard");
         const back = document.getElementById("flashcard-back");
         const actions = document.getElementById("flashcard-actions");
+        const btnSkip = document.getElementById("btn-skip");
+        const formLearned = document.getElementById("form-learned");
 
         back.style.display = "none";
         actions.style.display = "none";
 
-        card.addEventListener("click", function () {
+        function revealCard() {
             if (back.style.display === "none") {
-                back.style.display = "block";
+                back.style.display = "flex";
                 actions.style.display = "flex";
                 card.classList.add("flashcard--revealed");
+            }
+        }
+
+        card.addEventListener("click", revealCard);
+
+        document.addEventListener("keydown", function (event) {
+            if (event.target.tagName === "INPUT" || event.target.tagName === "TEXTAREA") {
+                return;
+            }
+
+            if (event.code === "Space") {
+                event.preventDefault();
+                revealCard();
+            } else if (event.key === "1" || event.code === "ArrowRight") {
+                if (btnSkip) {
+                    btnSkip.click();
+                }
+            } else if (event.key === "2") {
+                if (formLearned) {
+                    formLearned.submit();
+                }
+            } else if (event.code === "Enter" && back.style.display !== "none") {
+                if (formLearned) {
+                    formLearned.submit();
+                }
             }
         });
     });

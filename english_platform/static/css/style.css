@@ -1007,6 +1007,69 @@ a.sidebar__logo:hover .sidebar__logo-mark {
     line-height: 1.45;
 }
 
+.dict-structure__banner {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: rgba(56, 189, 248, 0.08);
+    border: 1px solid rgba(56, 189, 248, 0.25);
+    padding: 12px 16px;
+    border-radius: var(--radius-md);
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+}
+
+.dict-structure__label {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--accent-blue);
+}
+
+.dict-structure__formula {
+    font-size: 15px;
+    font-weight: 700;
+    color: #f8fafc;
+    letter-spacing: 0.01em;
+}
+
+.dict-structure__note {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    background: rgba(234, 179, 8, 0.08);
+    border: 1px solid rgba(234, 179, 8, 0.25);
+    padding: 12px 16px;
+    border-radius: var(--radius-md);
+    margin-bottom: 16px;
+}
+
+.dict-structure__note-icon {
+    font-size: 18px;
+    line-height: 1.2;
+}
+
+.dict-structure__note-body {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.dict-structure__note-title {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: #facc15;
+}
+
+.dict-structure__note-text {
+    font-size: 13.5px;
+    color: #fef08a;
+    line-height: 1.45;
+}
+
 .dict-slots {
     display: flex;
     flex-direction: column;
@@ -1041,6 +1104,16 @@ a.sidebar__logo:hover .sidebar__logo-mark {
     border: 1px solid rgba(255, 255, 255, 0.1);
     padding: 2px 7px;
     border-radius: 5px;
+}
+
+.dict-slot__pos {
+    font-size: 11.5px;
+    font-weight: 600;
+    color: #38bdf8;
+    background: rgba(56, 189, 248, 0.1);
+    border: 1px solid rgba(56, 189, 248, 0.25);
+    padding: 1px 6px;
+    border-radius: 4px;
 }
 
 .dict-slot__desc {
@@ -1091,6 +1164,14 @@ a.sidebar__logo:hover .sidebar__logo-mark {
     margin-top: 14px;
     padding-top: 14px;
     border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.dict-variations__title {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-muted);
 }
 
 .dict-variation {
@@ -1764,7 +1845,7 @@ a.sidebar__logo:hover .sidebar__logo-mark {
 
 .flashcard {
     width: 100%;
-    max-width: 580px;
+    max-width: 760px;
     background: var(--bg-card);
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
@@ -1774,10 +1855,15 @@ a.sidebar__logo:hover .sidebar__logo-mark {
     cursor: pointer;
     box-shadow: var(--shadow-md);
     transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
-    min-height: 240px;
+    min-height: 280px;
     display: flex;
     flex-direction: column;
-    gap: 18px;
+    gap: 20px;
+}
+
+.flashcard--large {
+    min-height: 380px;
+    padding: 46px 42px;
 }
 
 .flashcard:hover {
@@ -1801,6 +1887,13 @@ a.sidebar__logo:hover .sidebar__logo-mark {
     min-height: 320px;
 }
 
+.flashcard__front {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    width: 100%;
+}
+
 .flashcard__hint {
     font-size: 12px;
     color: var(--text-muted);
@@ -1813,8 +1906,9 @@ a.sidebar__logo:hover .sidebar__logo-mark {
     font-size: 44px;
     font-weight: 800;
     color: var(--text-primary);
-    line-height: 1.1;
+    line-height: 1.15;
     letter-spacing: -0.02em;
+    word-break: break-word;
 }
 
 .flashcard__meta {
@@ -1830,12 +1924,24 @@ a.sidebar__logo:hover .sidebar__logo-mark {
     font-weight: 500;
 }
 
+.flashcard__pattern-preview {
+    font-size: 14px;
+    color: var(--accent-blue);
+    background: rgba(56, 189, 248, 0.08);
+    border: 1px solid rgba(56, 189, 248, 0.2);
+    padding: 8px 14px;
+    border-radius: 6px;
+    width: fit-content;
+    max-width: 100%;
+    word-break: break-word;
+}
+
 .flashcard__back {
     border-top: 1px solid var(--border-muted);
-    padding-top: 18px;
+    padding-top: 22px;
     display: flex;
     flex-direction: column;
-    gap: 14px;
+    gap: 18px;
     animation: fadeIn 0.25s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
@@ -1844,43 +1950,223 @@ a.sidebar__logo:hover .sidebar__logo-mark {
     to   { opacity: 1; transform: translateY(0); }
 }
 
-.flashcard__meanings {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
+.flashcard__primary-ru {
+    font-size: 26px;
+    font-weight: 800;
+    color: var(--text-primary);
+    line-height: 1.25;
+    letter-spacing: -0.01em;
 }
 
-.flashcard__meaning {
+.flashcard__en-def {
+    font-size: 14px;
+    color: var(--text-secondary);
+    font-style: italic;
+    line-height: 1.5;
+    padding-left: 12px;
+    border-left: 2px solid rgba(255, 255, 255, 0.15);
+}
+
+.flashcard__formula-box {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: rgba(56, 189, 248, 0.08);
+    border: 1px solid rgba(56, 189, 248, 0.22);
+    padding: 10px 14px;
+    border-radius: 8px;
+    flex-wrap: wrap;
+}
+
+.flashcard__formula-label {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--accent-blue);
+}
+
+.flashcard__formula {
+    font-size: 14px;
+    font-weight: 600;
+    color: #f8fafc;
+}
+
+.flashcard__note-box {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    background: rgba(234, 179, 8, 0.08);
+    border: 1px solid rgba(234, 179, 8, 0.22);
+    padding: 10px 14px;
+    border-radius: 8px;
+    font-size: 13.5px;
+    color: #fef08a;
+    line-height: 1.45;
+}
+
+.flashcard__note-icon {
+    font-size: 16px;
+    line-height: 1.2;
+}
+
+.flashcard__senses {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.flashcard__sense {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.flashcard__sense-head {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.flashcard__sense-ru {
+    font-size: 17px;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.flashcard__sense-context {
+    font-size: 12.5px;
+    color: var(--text-muted);
+}
+
+.flashcard__examples {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.flashcard__example-item {
     display: flex;
     flex-direction: column;
     gap: 4px;
-}
-
-.flashcard__meaning-ru {
-    font-size: 19px;
-    font-weight: 600;
-    color: var(--text-primary);
-}
-
-.flashcard__example {
-    font-size: 14px;
-    color: var(--text-primary);
-    font-style: italic;
-    padding-left: 12px;
+    padding: 8px 14px;
+    background: rgba(255, 255, 255, 0.02);
     border-left: 2px solid var(--accent-blue);
+    border-radius: 0 6px 6px 0;
+}
+
+.flashcard__example-en {
+    font-size: 14.5px;
+    font-weight: 500;
+    color: #f8fafc;
+    line-height: 1.45;
 }
 
 .flashcard__example-ru {
     font-size: 13px;
+    color: var(--text-secondary);
+    line-height: 1.4;
+}
+
+.flashcard__section {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding-top: 14px;
+    border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.flashcard__section-label {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
     color: var(--text-muted);
-    padding-left: 12px;
+}
+
+.flashcard__chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.flashcard__chip {
+    font-size: 13px;
+    color: var(--text-primary);
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.09);
+    padding: 4px 10px;
+    border-radius: 6px;
+}
+
+.flashcard__slots-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 10px;
+}
+
+.flashcard__slot-mini {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.07);
+    padding: 10px 12px;
+    border-radius: 8px;
+}
+
+.flashcard__slot-mini-token {
+    font-size: 13px;
+    font-weight: 700;
+    color: #e2e8f0;
+}
+
+.flashcard__slot-mini-pos {
+    font-size: 11px;
+    color: #38bdf8;
+}
+
+.flashcard__slot-mini-desc {
+    font-size: 12.5px;
+    color: var(--text-secondary);
+    line-height: 1.35;
+}
+
+.flashcard__slot-mini-tokens {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    margin-top: 2px;
+}
+
+.flashcard__chip-sm {
+    font-size: 11.5px;
+    color: var(--text-muted);
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    padding: 2px 7px;
+    border-radius: 4px;
 }
 
 .flashcard__actions {
     display: flex;
     gap: 14px;
     width: 100%;
-    max-width: 580px;
+    max-width: 760px;
+}
+
+.flashcard__kbd {
+    display: inline-block;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-muted);
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    padding: 1px 6px;
+    border-radius: 4px;
+    margin-left: 6px;
+    vertical-align: middle;
 }
 
 .flashcard__actions form {

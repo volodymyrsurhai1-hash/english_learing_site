@@ -130,12 +130,29 @@
                 </div>
                 {% endif %}
 
-                {% if entry.slots or entry.variations %}
+                {% if entry.pattern or entry.slots or entry.variations or entry.grammar_note %}
                 <div class="card dict-card">
                     <div class="dict-card__header">
                         <span class="dict-card__icon">🧩</span>
                         <h3 class="dict-card__title">Структура конструкции</h3>
                     </div>
+
+                    {% if entry.pattern %}
+                    <div class="dict-structure__banner">
+                        <span class="dict-structure__label">Схема:</span>
+                        <code class="dict-structure__formula font-mono">{{ entry.pattern }}</code>
+                    </div>
+                    {% endif %}
+
+                    {% if entry.grammar_note %}
+                    <div class="dict-structure__note">
+                        <span class="dict-structure__note-icon">💡</span>
+                        <div class="dict-structure__note-body">
+                            <span class="dict-structure__note-title">Особенности употребления:</span>
+                            <span class="dict-structure__note-text">{{ entry.grammar_note }}</span>
+                        </div>
+                    </div>
+                    {% endif %}
 
                     {% if entry.slots %}
                     <div class="dict-slots">
@@ -143,6 +160,9 @@
                         <div class="dict-slot">
                             <div class="dict-slot__head">
                                 <span class="dict-slot__token font-mono">[{{ slot.name }}]</span>
+                                {% if slot.grammatical_form %}
+                                <span class="dict-slot__pos font-mono">{{ slot.grammatical_form }}</span>
+                                {% endif %}
                                 {% if slot.description %}
                                 <span class="dict-slot__desc">{{ slot.description }}</span>
                                 {% endif %}
@@ -168,6 +188,7 @@
 
                     {% if entry.variations %}
                     <div class="dict-variations">
+                        <div class="dict-variations__title">Вариации схемы:</div>
                         {% for var in entry.variations %}
                         <div class="dict-variation">
                             <code class="dict-variation__pattern font-mono">{{ var.pattern }}</code>

@@ -20,6 +20,7 @@ class CuratedSense:
 @dataclass(frozen=True)
 class CuratedSlot:
     name: str
+    grammatical_form: Optional[str]
     description: str
     tokens: list[str]
     sentences: list[str]
@@ -42,6 +43,7 @@ class CuratedDictionaryEntry:
     primary_translation: str
     english_definition: Optional[str]
     pattern: Optional[str]
+    grammar_note: Optional[str]
     what_it_means: Optional[str]
     senses: list[CuratedSense]
     senses_title: str
@@ -150,13 +152,24 @@ class DictionaryPresenter:
         if is_single_sense and curated_senses and not curated_senses[0].show_header:
             senses_title = "Примеры употребления"
 
+        grammar_note_raw: Optional[str] = result.get("grammar_note")
+        grammar_note: Optional[str] = None
+        if grammar_note_raw:
+            cleaned_gn: str = str(grammar_note_raw).strip()
+            if cleaned_gn:
+                grammar_note = cleaned_gn
+
         raw_slots: Any = result.get("slots")
         curated_slots: list[CuratedSlot] = []
         if isinstance(raw_slots, list):
             for slot in raw_slots:
                 if not isinstance(slot, dict):
                     continue
-                name: str = str(slot.get("name") or "").strip()
+                name: str = str(slot.get("name") or "").strip().strip("[]")
+                grammatical_form_raw: Optional[str] = slot.get("grammatical_form")
+                grammatical_form: Optional[str] = (
+                    str(grammatical_form_raw).strip() if grammatical_form_raw else None
+                )
                 description: str = str(slot.get("description") or "").strip()
                 examples_val: Any = slot.get("examples")
                 tokens: list[str] = []
@@ -175,6 +188,7 @@ class DictionaryPresenter:
                 curated_slots.append(
                     CuratedSlot(
                         name=name,
+                        grammatical_form=grammatical_form,
                         description=description,
                         tokens=tokens,
                         sentences=sentences,
@@ -220,6 +234,7 @@ class DictionaryPresenter:
             primary_translation=primary_translation,
             english_definition=english_definition,
             pattern=pattern,
+            grammar_note=grammar_note,
             what_it_means=what_it_means,
             senses=curated_senses,
             senses_title=senses_title,
