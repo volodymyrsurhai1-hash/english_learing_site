@@ -40,13 +40,13 @@
                                 {% if is_saved %}
                                 <form method="post" action="{% url 'dictionary:delete_word' %}">
                                     {% csrf_token %}
-                                    <input type="hidden" name="word" value="{{ query }}">
+                                    <input type="hidden" name="word" value="{{ entry.english }}">
                                     <button type="submit" class="btn btn--danger-sm">🗑 Удалить из сохранённых</button>
                                 </form>
                                 {% else %}
                                 <form method="post" action="{% url 'dictionary:save_word' %}">
                                     {% csrf_token %}
-                                    <input type="hidden" name="word" value="{{ query }}">
+                                    <input type="hidden" name="word" value="{{ entry.english }}">
                                     <button type="submit" class="btn btn--outline-sm">🔖 Сохранить в словарь</button>
                                 </form>
                                 {% endif %}
@@ -258,7 +258,15 @@
     {% elif error %}
     <div class="card dictionary__error">
         <span class="dictionary__error-icon">⚠️</span>
-        <p class="dictionary__error-text">{{ error }}</p>
+        <div class="dictionary__error-content">
+            <p class="dictionary__error-text">{{ error }}</p>
+            {% if suggestion %}
+            <p class="dictionary__suggestion-text" style="margin-top: 8px;">
+                Возможно, вы имели в виду:
+                <a href="/?q={{ suggestion }}" class="tag tag--clickable" data-query="{{ suggestion }}"><strong>{{ suggestion }}</strong></a>?
+            </p>
+            {% endif %}
+        </div>
     </div>
     {% endif %}
 </div>

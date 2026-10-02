@@ -95,10 +95,17 @@ class DictionaryPresenter:
             senses_title = "Применения и примеры"
 
         primary_translation: str = ""
-        if raw_senses and isinstance(raw_senses[0], dict):
-            primary_translation = str(raw_senses[0].get("ru") or "").strip()
-        elif result.get("what_it_means"):
-            primary_translation = str(result.get("what_it_means") or "").strip()
+        explicit_primary: Optional[str] = result.get("primary_translation")
+        if explicit_primary:
+            cleaned_primary: str = str(explicit_primary).strip().rstrip(".")
+            if cleaned_primary:
+                primary_translation = cleaned_primary
+
+        if not primary_translation:
+            if raw_senses and isinstance(raw_senses[0], dict):
+                primary_translation = str(raw_senses[0].get("ru") or "").strip()
+            elif result.get("what_it_means"):
+                primary_translation = str(result.get("what_it_means") or "").strip()
 
         if len(primary_translation) > 100 and "." in primary_translation:
             first_sentence: str = primary_translation.split(".")[0].strip()

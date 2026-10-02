@@ -6,18 +6,18 @@ from django.shortcuts import redirect
 from django.views import View
 from django.views.generic import TemplateView
 
+from apps.dictionary.models import Word
 from apps.dictionary.presenters import CuratedDictionaryEntry, DictionaryPresenter
 from apps.dictionary.services import (
+    AIServiceUnavailableError,
+    WordNotFoundError,
     delete_word_for_user,
     get_or_generate_word,
     is_word_saved,
     save_word_for_user,
     toggle_word_status,
     validate_query,
-    AIServiceUnavailableError,
-    WordNotFoundError,
 )
-from apps.dictionary.models import Word
 
 
 class SearchView(TemplateView):
@@ -28,6 +28,7 @@ class SearchView(TemplateView):
         query: str = self.request.GET.get("q", "").strip()
         context["query"] = query
         context["error"] = None
+        context["suggestion"] = None
 
         if query:
             validation_error: Optional[str] = validate_query(query)
@@ -44,11 +45,14 @@ class SearchView(TemplateView):
                     context["primary_translation"] = entry.primary_translation
 
                     if self.request.user.is_authenticated:
-                        context["is_saved"] = is_word_saved(query, self.request.user)
+                        context["is_saved"] = is_word_saved(
+                            entry.english, self.request.user
+                        )
                     else:
                         context["is_saved"] = False
                 except WordNotFoundError as exc:
                     context["error"] = str(exc)
+                    context["suggestion"] = exc.suggestion
                 except AIServiceUnavailableError as exc:
                     context["error"] = str(exc)
                 except Exception:

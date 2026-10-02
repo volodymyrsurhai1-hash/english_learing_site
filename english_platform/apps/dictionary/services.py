@@ -9,7 +9,9 @@ logger = logging.getLogger(__name__)
 
 
 class WordNotFoundError(Exception):
-    pass
+    def __init__(self, message: str, suggestion: Optional[str] = None) -> None:
+        super().__init__(message)
+        self.suggestion: Optional[str] = suggestion
 
 
 class AIServiceUnavailableError(Exception):
@@ -42,22 +44,33 @@ def get_or_generate_word(query: str) -> dict[str, Any]:
         ) from exc
 
     if not result.get("is_valid", True):
+        suggestion: Optional[str] = result.get("suggested_correction")
+        if suggestion and suggestion.lower().strip() != normalized:
+            raise WordNotFoundError(
+                f"«{query}» не найдено в словаре.",
+                suggestion=suggestion.strip(),
+            )
         raise WordNotFoundError(
             f"«{query}» не является существующим английским словом или выражением."
         )
 
+    canonical: str = str(result.get("english") or normalized).lower().strip()
+
     word_instance, _ = Word.objects.get_or_create(
-        word=normalized,
+        word=canonical,
         defaults={"full_translation": result},
     )
-    logger.info("Saved new word to DB: %s", normalized)
+    logger.info("Saved new word to DB: %s", canonical)
 
     return word_instance.full_translation
 
 
 def save_word_for_user(word_text: str, user: Any) -> tuple[UserWord, bool]:
     normalized: str = word_text.lower().strip()
-    word: Optional[Word] = Word.objects.filter(word=normalized).first()
+    word: Optional[Word] = (
+        Word.objects.filter(word=normalized).first()
+        or Word.objects.filter(full_translation__english__iexact=normalized).first()
+    )
     if word is None:
         raise Word.DoesNotExist(f"Word '{normalized}' not found in DB.")
     user_word, created = UserWord.objects.get_or_create(user=user, word=word)
