@@ -123,10 +123,15 @@ class YtDlpDownloader(VideoDownloader):
                     has_cookies = True
                     break
 
-        if not has_cookies:
-            opts["extractor_args"] = {
-                "youtube": {"player_client": ["ios", "web", "mweb"]}
+        opts["extractor_args"] = {
+            "youtube": {
+                "player_client": (
+                    ["web_embedded", "web", "mweb"]
+                    if has_cookies
+                    else ["ios", "web", "mweb"]
+                )
             }
+        }
 
         proxy: str = os.environ.get("YOUTUBE_PROXY", "")
         if proxy:
