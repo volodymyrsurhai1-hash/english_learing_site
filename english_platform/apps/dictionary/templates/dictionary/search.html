@@ -3,6 +3,175 @@
 {% block title %}Словарь — English Platform{% endblock %}
 {% block page_title %}📖 Словарь{% endblock %}
 
+{% block extra_css %}
+<style>
+.dict-slots {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+.dict-slot {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 16px;
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: var(--radius-md);
+}
+.dict-slot__head {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    flex-wrap: wrap;
+    padding-bottom: 8px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+.dict-slot__token {
+    font-size: 13px;
+    font-weight: 700;
+    color: #e2e8f0;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    padding: 3px 8px;
+    border-radius: 6px;
+}
+.dict-slot__pos {
+    font-size: 11.5px;
+    font-weight: 600;
+    color: #38bdf8;
+    background: rgba(56, 189, 248, 0.12);
+    border: 1px solid rgba(56, 189, 248, 0.28);
+    padding: 2px 7px;
+    border-radius: 5px;
+}
+.dict-slot__desc {
+    font-size: 13.5px;
+    color: #94a3b8;
+    line-height: 1.4;
+}
+.dict-slot__tokens {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+.dict-slot__sublabel {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: #94a3b8;
+}
+.dict-slot__chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+.dict-slot__chip {
+    font-size: 12.5px;
+    font-weight: 500;
+    color: #cbd5e1;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    padding: 4px 10px;
+    border-radius: 6px;
+    line-height: 1.35;
+}
+.dict-slot__examples {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+.dict-slot__example {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 10px 14px;
+    background: rgba(255, 255, 255, 0.025);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-left: 3px solid var(--accent-blue);
+    border-radius: 0 8px 8px 0;
+}
+.dict-slot__example-en {
+    font-size: 14px;
+    font-weight: 600;
+    color: #f8fafc;
+    line-height: 1.45;
+}
+.dict-slot__example-ru {
+    font-size: 13px;
+    color: #94a3b8;
+    line-height: 1.4;
+}
+.dict-variations {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-top: 20px;
+    padding-top: 16px;
+    border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+.dict-variations__title {
+    font-size: 11.5px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    color: #94a3b8;
+}
+.dict-variation {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 12px 14px;
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: var(--radius-sm);
+}
+.dict-variation__row {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+.dict-variation__pattern {
+    font-size: 13px;
+    font-weight: 600;
+    color: #e2e8f0;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    padding: 3px 8px;
+    border-radius: 6px;
+}
+.dict-variation__note {
+    font-size: 13px;
+    color: #94a3b8;
+}
+.dict-variation__example {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    padding: 8px 12px;
+    background: rgba(255, 255, 255, 0.02);
+    border-left: 2px solid rgba(56, 189, 248, 0.4);
+    border-radius: 0 6px 6px 0;
+}
+.dict-variation__example-en {
+    font-size: 13px;
+    font-weight: 500;
+    color: #f1f5f9;
+    line-height: 1.4;
+}
+.dict-variation__example-ru {
+    font-size: 12.5px;
+    color: #94a3b8;
+    line-height: 1.35;
+}
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="dictionary">
     <div class="dictionary__progress" id="dict-progress"><div class="dictionary__progress-bar"></div></div>
@@ -172,14 +341,14 @@
                                 <span class="dict-slot__sublabel">Подходящие слова:</span>
                                 <div class="dict-slot__chips">
                                     {% for token in slot.tokens %}
-                                    <span class="dict-slot__chip">{{ token }}</span>
+                                    <span class="dict-slot__chip font-mono">{{ token }}</span>
                                     {% endfor %}
                                 </div>
                             </div>
                             {% endif %}
                             {% if slot.examples %}
                             <div class="dict-slot__examples">
-                                <span class="dict-slot__sublabel">Пример в речи:</span>
+                                <span class="dict-slot__sublabel">Примеры в речи:</span>
                                 {% for ex in slot.examples %}
                                 <div class="dict-slot__example">
                                     <div class="dict-slot__example-en">{{ ex.en }}</div>
@@ -190,11 +359,14 @@
                                 {% endfor %}
                             </div>
                             {% elif slot.sentences %}
-                            <ul class="dict-slot__sentences">
-                                {% for sentence in slot.sentences %}
-                                <li class="dict-slot__sentence">{{ sentence }}</li>
-                                {% endfor %}
-                            </ul>
+                            <div class="dict-slot__examples">
+                                <span class="dict-slot__sublabel">Примеры в речи:</span>
+                                <ul class="dict-slot__sentences">
+                                    {% for sentence in slot.sentences %}
+                                    <li class="dict-slot__sentence">{{ sentence }}</li>
+                                    {% endfor %}
+                                </ul>
+                            </div>
                             {% endif %}
                         </div>
                         {% endfor %}
