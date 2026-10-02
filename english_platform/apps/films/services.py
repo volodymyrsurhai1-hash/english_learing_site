@@ -89,7 +89,7 @@ class YtDlpDownloader(VideoDownloader):
             "noplaylist": config.no_playlist,
             "quiet": False,
             "no_color": True,
-            "ignoreerrors": True,
+            "ignoreerrors": False,
             "windowsfilenames": True,
             "postprocessor_args": {"ffmpeg": ["-movflags", "+faststart"]},
         }
