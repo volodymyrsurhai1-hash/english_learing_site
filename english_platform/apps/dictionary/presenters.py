@@ -23,6 +23,7 @@ class CuratedSlot:
     grammatical_form: Optional[str]
     description: str
     tokens: list[str]
+    examples: list[CuratedExample]
     sentences: list[str]
 
 
@@ -30,6 +31,7 @@ class CuratedSlot:
 class CuratedVariation:
     pattern: str
     note: str
+    example: Optional[CuratedExample] = None
 
 
 @dataclass(frozen=True)
@@ -187,26 +189,50 @@ class DictionaryPresenter:
                     str(grammatical_form_raw).strip() if grammatical_form_raw else None
                 )
                 description: str = str(slot.get("description") or "").strip()
-                examples_val: Any = slot.get("examples")
                 tokens: list[str] = []
                 sentences: list[str] = []
+                curated_slot_examples: list[CuratedExample] = []
+
+                raw_tokens: Any = slot.get("tokens")
+                if isinstance(raw_tokens, list):
+                    for tok in raw_tokens:
+                        s_tok: str = str(tok).strip()
+                        if s_tok and s_tok not in tokens:
+                            tokens.append(s_tok)
+
+                examples_val: Any = slot.get("examples")
                 if isinstance(examples_val, list):
                     for item in examples_val:
-                        s_item: str = str(item).strip()
-                        if not s_item:
-                            continue
-                        if len(s_item) <= 35 and not (
-                            s_item.endswith(".") or s_item.endswith("!")
-                        ):
-                            tokens.append(s_item)
-                        else:
-                            sentences.append(s_item)
+                        if isinstance(item, dict):
+                            en_str: str = str(item.get("en") or "").strip()
+                            ru_str: str = str(item.get("ru") or "").strip()
+                            if en_str:
+                                curated_slot_examples.append(
+                                    CuratedExample(en=en_str, ru=ru_str)
+                                )
+                                sentences.append(en_str)
+                        elif isinstance(item, str):
+                            s_item: str = item.strip()
+                            if not s_item:
+                                continue
+                            if len(s_item) <= 35 and not (
+                                s_item.endswith(".") or s_item.endswith("!")
+                            ):
+                                if s_item not in tokens:
+                                    tokens.append(s_item)
+                            else:
+                                sentences.append(s_item)
+                                curated_slot_examples.append(
+                                    CuratedExample(en=s_item, ru="")
+                                )
+
                 curated_slots.append(
                     CuratedSlot(
                         name=name,
                         grammatical_form=grammatical_form,
                         description=description,
                         tokens=tokens,
+                        examples=curated_slot_examples,
                         sentences=sentences,
                     )
                 )
@@ -218,9 +244,22 @@ class DictionaryPresenter:
                 if isinstance(var, dict):
                     pattern_val: str = str(var.get("pattern") or "").strip()
                     note_val: str = str(var.get("note") or "").strip()
+                    ex_val: Any = var.get("example")
+                    curated_var_ex: Optional[CuratedExample] = None
+                    if isinstance(ex_val, dict):
+                        en_ex: str = str(ex_val.get("en") or "").strip()
+                        ru_ex: str = str(ex_val.get("ru") or "").strip()
+                        if en_ex:
+                            curated_var_ex = CuratedExample(en=en_ex, ru=ru_ex)
+                    elif isinstance(ex_val, str) and ex_val.strip():
+                        curated_var_ex = CuratedExample(en=ex_val.strip(), ru="")
                     if pattern_val:
                         curated_variations.append(
-                            CuratedVariation(pattern=pattern_val, note=note_val)
+                            CuratedVariation(
+                                pattern=pattern_val,
+                                note=note_val,
+                                example=curated_var_ex,
+                            )
                         )
 
         synonyms_by_level: list[dict[str, Any]] = (

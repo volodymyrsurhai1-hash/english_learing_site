@@ -1122,6 +1122,21 @@ a.sidebar__logo:hover .sidebar__logo-mark {
     line-height: 1.4;
 }
 
+.dict-slot__tokens {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-top: 2px;
+}
+
+.dict-slot__sublabel {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--text-muted);
+}
+
 .dict-slot__chips {
     display: flex;
     flex-wrap: wrap;
@@ -1136,6 +1151,34 @@ a.sidebar__logo:hover .sidebar__logo-mark {
     padding: 3px 10px;
     border-radius: 6px;
     line-height: 1.35;
+}
+
+.dict-slot__examples {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-top: 6px;
+}
+
+.dict-slot__example {
+    padding: 8px 12px;
+    background: rgba(255, 255, 255, 0.02);
+    border-left: 3px solid var(--accent-blue);
+    border-radius: 0 6px 6px 0;
+}
+
+.dict-slot__example-en {
+    font-size: 13.5px;
+    font-weight: 600;
+    color: #f1f5f9;
+    line-height: 1.45;
+}
+
+.dict-slot__example-ru {
+    font-size: 12.5px;
+    color: var(--text-muted);
+    line-height: 1.4;
+    margin-top: 2px;
 }
 
 .dict-slot__sentences {
@@ -1160,7 +1203,7 @@ a.sidebar__logo:hover .sidebar__logo-mark {
 .dict-variations {
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: 10px;
     margin-top: 14px;
     padding-top: 14px;
     border-top: 1px solid rgba(255, 255, 255, 0.06);
@@ -1175,6 +1218,16 @@ a.sidebar__logo:hover .sidebar__logo-mark {
 }
 
 .dict-variation {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 10px 14px;
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 6px;
+}
+
+.dict-variation__row {
     display: flex;
     align-items: baseline;
     gap: 10px;
@@ -1194,6 +1247,26 @@ a.sidebar__logo:hover .sidebar__logo-mark {
 .dict-variation__note {
     font-size: 13px;
     color: #94a3b8;
+}
+
+.dict-variation__example {
+    margin-top: 4px;
+    padding-left: 10px;
+    border-left: 2px solid rgba(56, 189, 248, 0.4);
+}
+
+.dict-variation__example-en {
+    font-size: 13px;
+    font-weight: 500;
+    color: #f1f5f9;
+    line-height: 1.4;
+}
+
+.dict-variation__example-ru {
+    font-size: 12px;
+    color: var(--text-muted);
+    line-height: 1.35;
+    margin-top: 2px;
 }
 
 .dict-synonyms-groups {

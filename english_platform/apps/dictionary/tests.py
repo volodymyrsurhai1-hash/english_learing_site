@@ -245,6 +245,72 @@ class DictionaryPresenterTests(SimpleTestCase):
             "It is characteristic of [someone] to [do something]",
         )
 
+    def test_present_handles_construction_slot_and_variation_examples(self) -> None:
+        data: dict[str, Any] = {
+            "english": "make a mess",
+            "entry_type": "construction",
+            "pattern": "[subject] + make a mess + in [place]",
+            "grammar_note": "Требуется предлог in для указания места.",
+            "what_it_means": "устроить беспорядок где-либо",
+            "uses": [
+                {
+                    "ru": "навести беспорядок",
+                    "examples": [
+                        {
+                            "en": "The kids made a huge mess in the room.",
+                            "ru": "Дети устроили огромный беспорядок в комнате.",
+                        }
+                    ],
+                }
+            ],
+            "slots": [
+                {
+                    "name": "subject",
+                    "grammatical_form": "существительное",
+                    "description": "Кто устраивает беспорядок",
+                    "tokens": ["the children", "my roommate"],
+                    "examples": [
+                        {
+                            "en": "The children made a mess while cooking.",
+                            "ru": "Дети устроили беспорядок во время готовки.",
+                        }
+                    ],
+                }
+            ],
+            "variations": [
+                {
+                    "pattern": "[place] + be a mess",
+                    "note": "Когда описываем состояние места",
+                    "example": {
+                        "en": "The kitchen was a complete mess.",
+                        "ru": "Кухня была в полном беспорядке.",
+                    },
+                }
+            ],
+        }
+
+        entry: CuratedDictionaryEntry = DictionaryPresenter.present(data, "make a mess")
+
+        self.assertEqual(entry.pattern, "[subject] + make a mess + in [place]")
+        self.assertEqual(len(entry.slots), 1)
+        self.assertEqual(entry.slots[0].tokens, ["the children", "my roommate"])
+        self.assertEqual(len(entry.slots[0].examples), 1)
+        self.assertEqual(
+            entry.slots[0].examples[0].en, "The children made a mess while cooking."
+        )
+        self.assertEqual(
+            entry.slots[0].examples[0].ru, "Дети устроили беспорядок во время готовки."
+        )
+        self.assertEqual(len(entry.variations), 1)
+        self.assertIsNotNone(entry.variations[0].example)
+        if entry.variations[0].example:
+            self.assertEqual(
+                entry.variations[0].example.en, "The kitchen was a complete mess."
+            )
+            self.assertEqual(
+                entry.variations[0].example.ru, "Кухня была в полном беспорядке."
+            )
+
 
 class DictionaryServiceTests(SimpleTestCase):
     @patch("apps.dictionary.services.Word.objects")

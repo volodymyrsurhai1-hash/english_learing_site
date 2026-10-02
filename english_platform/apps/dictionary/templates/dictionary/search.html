@@ -168,13 +168,28 @@
                                 {% endif %}
                             </div>
                             {% if slot.tokens %}
-                            <div class="dict-slot__chips">
-                                {% for token in slot.tokens %}
-                                <span class="dict-slot__chip">{{ token }}</span>
-                                {% endfor %}
+                            <div class="dict-slot__tokens">
+                                <span class="dict-slot__sublabel">Подходящие слова:</span>
+                                <div class="dict-slot__chips">
+                                    {% for token in slot.tokens %}
+                                    <span class="dict-slot__chip">{{ token }}</span>
+                                    {% endfor %}
+                                </div>
                             </div>
                             {% endif %}
-                            {% if slot.sentences %}
+                            {% if slot.examples %}
+                            <div class="dict-slot__examples">
+                                <span class="dict-slot__sublabel">Пример в речи:</span>
+                                {% for ex in slot.examples %}
+                                <div class="dict-slot__example">
+                                    <div class="dict-slot__example-en">{{ ex.en }}</div>
+                                    {% if ex.ru %}
+                                    <div class="dict-slot__example-ru">{{ ex.ru }}</div>
+                                    {% endif %}
+                                </div>
+                                {% endfor %}
+                            </div>
+                            {% elif slot.sentences %}
                             <ul class="dict-slot__sentences">
                                 {% for sentence in slot.sentences %}
                                 <li class="dict-slot__sentence">{{ sentence }}</li>
@@ -191,9 +206,19 @@
                         <div class="dict-variations__title">Вариации схемы:</div>
                         {% for var in entry.variations %}
                         <div class="dict-variation">
-                            <code class="dict-variation__pattern font-mono">{{ var.pattern }}</code>
-                            {% if var.note %}
-                            <span class="dict-variation__note">{{ var.note }}</span>
+                            <div class="dict-variation__row">
+                                <code class="dict-variation__pattern font-mono">{{ var.pattern }}</code>
+                                {% if var.note %}
+                                <span class="dict-variation__note">{{ var.note }}</span>
+                                {% endif %}
+                            </div>
+                            {% if var.example %}
+                            <div class="dict-variation__example">
+                                <div class="dict-variation__example-en">{{ var.example.en }}</div>
+                                {% if var.example.ru %}
+                                <div class="dict-variation__example-ru">{{ var.example.ru }}</div>
+                                {% endif %}
+                            </div>
                             {% endif %}
                         </div>
                         {% endfor %}
