@@ -57,9 +57,10 @@ def _execute_download_task(task_id: str, url: str, user: Any = None) -> None:
         ru_rel = ""
         for sub_file in result.subtitle_files:
             rel_path = sub_file.relative_to(media_root).as_posix()
-            if ".en." in rel_path:
+            name_lower = sub_file.name.lower()
+            if re.search(r"\.en([-_][a-z0-9]+)?\.", name_lower):
                 en_rel = rel_path
-            elif ".ru." in rel_path:
+            elif re.search(r"\.ru([-_][a-z0-9]+)?\.", name_lower):
                 ru_rel = rel_path
 
         film = Film.objects.create(
@@ -159,9 +160,10 @@ class FilmDownloadView(LoginRequiredMixin, View):
         ru_rel: str = ""
         for sub_file in result.subtitle_files:
             rel_path: str = sub_file.relative_to(media_root).as_posix()
-            if ".en." in rel_path:
+            name_lower: str = sub_file.name.lower()
+            if re.search(r"\.en([-_][a-z0-9]+)?\.", name_lower):
                 en_rel = rel_path
-            elif ".ru." in rel_path:
+            elif re.search(r"\.ru([-_][a-z0-9]+)?\.", name_lower):
                 ru_rel = rel_path
 
         film: Film = Film.objects.create(

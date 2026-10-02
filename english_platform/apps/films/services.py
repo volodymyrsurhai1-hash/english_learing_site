@@ -1,3 +1,4 @@
+import logging
 import os
 from pathlib import Path
 import shutil
@@ -10,6 +11,8 @@ import yt_dlp
 from apps.films.dataclasses import DownloadConfig, DownloadResult, SubtitleConfig
 from apps.films.interfaces import VideoDownloader
 from apps.films.progress import progress_tracker
+
+logger = logging.getLogger(__name__)
 
 
 class YtDlpDownloader(VideoDownloader):
@@ -73,7 +76,9 @@ class YtDlpDownloader(VideoDownloader):
 
         return hook
 
-    def _build_options(self, config: DownloadConfig) -> dict[str, Any]:
+    def _build_options(
+        self, config: DownloadConfig, use_cookies: bool = True
+    ) -> dict[str, Any]:
         opts: dict[str, Any] = {
             "format": (
                 f"bestvideo[ext={config.video_format}]+bestaudio[ext=m4a]"
@@ -89,25 +94,34 @@ class YtDlpDownloader(VideoDownloader):
             "postprocessor_args": {"ffmpeg": ["-movflags", "+faststart"]},
         }
 
-        cookie_candidates: list[str] = [
-            os.environ.get("YOUTUBE_COOKIES_PATH", ""),
-            "/app/cookies/cookies.txt",
-            "/app/cookies/youtube.txt",
-            str(Path(settings.BASE_DIR) / "cookies.txt"),
-            str(Path(settings.BASE_DIR).parent / "cookies.txt"),
-            str(Path(settings.MEDIA_ROOT) / "cookies.txt"),
-        ]
         has_cookies: bool = False
-        for candidate in cookie_candidates:
-            if candidate and Path(candidate).is_file():
-                tmp_cookie: Path = Path(tempfile.gettempdir()) / "yt_cookies.txt"
-                try:
-                    shutil.copy2(candidate, tmp_cookie)
-                    opts["cookiefile"] = str(tmp_cookie)
-                except Exception:
-                    opts["cookiefile"] = candidate
-                has_cookies = True
-                break
+        if use_cookies:
+            cookie_candidates: list[str] = [
+                os.environ.get("YOUTUBE_COOKIES_PATH", ""),
+                "/app/cookies/cookies.txt",
+                "/app/cookies/youtube.txt",
+                str(Path(settings.BASE_DIR) / "cookies.txt"),
+                str(Path(settings.BASE_DIR).parent / "cookies.txt"),
+                str(Path(settings.MEDIA_ROOT) / "cookies.txt"),
+            ]
+            for candidate in cookie_candidates:
+                if not candidate:
+                    continue
+                cand_path = Path(candidate)
+                if cand_path.is_file() and cand_path.stat().st_size > 0:
+                    try:
+                        with open(cand_path, "a+"):
+                            pass
+                        opts["cookiefile"] = candidate
+                    except OSError:
+                        tmp_cookie = Path(tempfile.gettempdir()) / "yt_cookies.txt"
+                        try:
+                            shutil.copy2(candidate, tmp_cookie)
+                            opts["cookiefile"] = str(tmp_cookie)
+                        except Exception:
+                            opts["cookiefile"] = candidate
+                    has_cookies = True
+                    break
 
         if not has_cookies:
             opts["extractor_args"] = {
@@ -164,20 +178,47 @@ class YtDlpDownloader(VideoDownloader):
         output_dir = prepared_base.parent
         stem = prepared_base.stem
 
+        requested_subs: dict[str, Any] = info.get("requested_subtitles") or {}
+        for sub_data in requested_subs.values():
+            if isinstance(sub_data, dict):
+                sub_fp = sub_data.get("filepath")
+                if sub_fp:
+                    sub_p = Path(sub_fp)
+                    if sub_p.is_file() and sub_p not in subtitle_files:
+                        subtitle_files.append(sub_p)
+
         if output_dir.exists():
+            video_id = info.get("id")
             for file_path in output_dir.iterdir():
                 if (
                     file_path.is_file()
-                    and file_path.name.startswith(stem)
                     and file_path.suffix in [".srt", ".vtt"]
+                    and file_path not in subtitle_files
                 ):
-                    subtitle_files.append(file_path)
+                    name = file_path.name
+                    if name.startswith(stem) or (video_id and str(video_id) in name):
+                        subtitle_files.append(file_path)
 
         return subtitle_files
 
-    def download(self, url: str, config: DownloadConfig) -> DownloadResult:
+    def _is_auth_or_cookie_error(self, error_msg: str) -> bool:
+        lowered = error_msg.lower()
+        return any(
+            pattern in lowered
+            for pattern in [
+                "cookies are no longer valid",
+                "sign in to confirm you’re not a bot",
+                "sign in to confirm you're not a bot",
+                "the page needs to be reloaded",
+                "login_required",
+            ]
+        )
+
+    def _execute_download(
+        self, url: str, config: DownloadConfig, use_cookies: bool
+    ) -> DownloadResult:
         config.output_dir.mkdir(parents=True, exist_ok=True)
-        opts = self._build_options(config)
+        opts = self._build_options(config, use_cookies=use_cookies)
 
         try:
             with yt_dlp.YoutubeDL(opts) as ydl:
@@ -271,3 +312,19 @@ class YtDlpDownloader(VideoDownloader):
                 success=False,
                 error=str(exc),
             )
+
+    def download(self, url: str, config: DownloadConfig) -> DownloadResult:
+        result = self._execute_download(url, config, use_cookies=True)
+        if (
+            not result.success
+            and result.error
+            and self._is_auth_or_cookie_error(result.error)
+        ):
+            logger.warning(
+                "Video download failed with auth/cookie error (%s). Retrying without cookies...",
+                result.error,
+            )
+            fallback_result = self._execute_download(url, config, use_cookies=False)
+            if fallback_result.success:
+                return fallback_result
+        return result

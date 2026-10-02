@@ -23,7 +23,7 @@
             </button>
 
             <video id="video-player" controls preload="metadata">
-                <source src="{{ media_url }}{{ film.video_file }}" type="video/mp4">
+                <source src="{{ media_url }}{{ film.video_file|urlencode }}" type="video/mp4">
             </video>
 
             <button id="skip-fwd-btn" class="film-player__side-btn film-player__side-btn--right" type="button" title="Forward 5s (→ / L)" aria-label="Forward 5 seconds">
