@@ -6,6 +6,7 @@ readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
     "aiogram>=3.30.0",
+    "bgutil-ytdlp-pot-provider>=2.0.1",
     "django>=6.1",
     "django-two-factor-auth>=1.18.1",
     "dotenv>=0.9.9",

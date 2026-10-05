@@ -123,15 +123,21 @@ class YtDlpDownloader(VideoDownloader):
                     has_cookies = True
                     break
 
-        opts["extractor_args"] = {
+        extractor_args: dict[str, dict[str, list[str]]] = {
             "youtube": {
                 "player_client": (
-                    ["web_embedded", "web", "mweb"]
+                    ["mweb", "tv", "web_safari", "web"]
                     if has_cookies
-                    else ["ios", "web", "mweb"]
+                    else ["mweb", "tv", "web_safari", "ios", "web"]
                 )
             }
         }
+
+        pot_provider_url: str = os.environ.get("YOUTUBE_POT_PROVIDER_URL", "")
+        if pot_provider_url:
+            extractor_args["youtubepot-bgutilhttp"] = {"base_url": [pot_provider_url]}
+
+        opts["extractor_args"] = extractor_args
 
         proxy: str = os.environ.get("YOUTUBE_PROXY", "")
         if proxy:

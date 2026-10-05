@@ -11,6 +11,12 @@ services:
     volumes:
       - pg_data:/var/lib/postgresql/data
 
+  pot-provider:
+    image: brainicism/bgutil-ytdlp-pot-provider:latest
+    restart: always
+    expose:
+      - "4416"
+
   web:
     build:
       context: .
@@ -21,12 +27,14 @@ services:
     environment:
       POSTGRES_HOST: db
       POSTGRES_PORT: 5432
+      YOUTUBE_POT_PROVIDER_URL: http://pot-provider:4416
     volumes:
       - static_data:/app/english_platform/staticfiles
       - media_data:/app/english_platform/media
       - ./cookies:/app/cookies
     depends_on:
       - db
+      - pot-provider
     expose:
       - "8000"
 
