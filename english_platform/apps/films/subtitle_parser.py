@@ -1,7 +1,7 @@
-import html
-import re
 from dataclasses import dataclass
+import html
 from pathlib import Path
+import re
 
 
 @dataclass(frozen=True)
@@ -10,6 +10,99 @@ class SubtitleEntry:
     start_seconds: float
     end_seconds: float
     text: str
+
+
+class SubtitleGrouper:
+    def __init__(
+        self,
+        target_words: int = 12,
+        max_words: int = 20,
+        max_duration: float = 7.0,
+        pause_threshold: float = 3.5,
+        min_sentence_words: int = 8,
+    ) -> None:
+        self._target_words: int = target_words
+        self._max_words: int = max_words
+        self._max_duration: float = max_duration
+        self._pause_threshold: float = pause_threshold
+        self._min_sentence_words: int = min_sentence_words
+
+    def group(self, entries: list[SubtitleEntry]) -> list[SubtitleEntry]:
+        if not entries:
+            return []
+
+        merged: list[SubtitleEntry] = []
+        i: int = 0
+        total_entries: int = len(entries)
+        auto_index: int = 1
+
+        while i < total_entries:
+            group: list[SubtitleEntry] = [entries[i]]
+            word_count: int = len(entries[i].text.split())
+            start_seconds: float = entries[i].start_seconds
+            j: int = i + 1
+
+            while j < total_entries:
+                next_entry: SubtitleEntry = entries[j]
+                next_words: int = len(next_entry.text.split())
+                gap: float = next_entry.start_seconds - entries[j - 1].start_seconds
+
+                if gap > self._pause_threshold:
+                    break
+
+                duration: float = next_entry.start_seconds - start_seconds
+                if duration > self._max_duration:
+                    break
+
+                prev_has_terminal_punct: bool = (
+                    group[-1].text.rstrip().endswith((".", "?", "!"))
+                )
+                if prev_has_terminal_punct and word_count >= self._min_sentence_words:
+                    break
+
+                if word_count + next_words > self._max_words:
+                    break
+
+                group.append(next_entry)
+                word_count += next_words
+
+                current_has_terminal_punct: bool = next_entry.text.rstrip().endswith(
+                    (".", "?", "!")
+                )
+                if word_count >= self._target_words and current_has_terminal_punct:
+                    j += 1
+                    break
+
+                j += 1
+
+            group_text: str = " ".join(e.text for e in group)
+            group_start: float = group[0].start_seconds
+            last_entry: SubtitleEntry = group[-1]
+
+            if j < total_entries:
+                next_start: float = entries[j].start_seconds
+                if next_start > last_entry.end_seconds:
+                    group_end: float = last_entry.end_seconds
+                else:
+                    group_end = next_start
+            else:
+                group_end = last_entry.end_seconds
+
+            if group_end <= group_start:
+                group_end = max(last_entry.end_seconds, group_start + 1.0)
+
+            merged.append(
+                SubtitleEntry(
+                    index=auto_index,
+                    start_seconds=round(group_start, 2),
+                    end_seconds=round(group_end, 2),
+                    text=group_text,
+                )
+            )
+            auto_index += 1
+            i = j
+
+        return merged
 
 
 def parse_timestamp(timestamp: str) -> float:
@@ -85,7 +178,9 @@ def parse_srt(filepath: Path) -> list[SubtitleEntry]:
 
 
 def load_bilingual_subtitles(
-    en_path: Path, ru_path: Path | None
+    en_path: Path,
+    ru_path: Path | None,
+    grouper: SubtitleGrouper | None = None,
 ) -> list[dict[str, str | float]]:
     en_entries: list[SubtitleEntry] = parse_srt(en_path)
     ru_entries: list[SubtitleEntry] = []
@@ -93,23 +188,21 @@ def load_bilingual_subtitles(
     if ru_path is not None and ru_path.exists():
         ru_entries = parse_srt(ru_path)
 
-    ru_map_by_index: dict[int, SubtitleEntry] = {e.index: e for e in ru_entries}
+    active_grouper: SubtitleGrouper = grouper or SubtitleGrouper()
+    grouped_en: list[SubtitleEntry] = active_grouper.group(en_entries)
 
     result: list[dict[str, str | float]] = []
 
-    for en_entry in en_entries:
+    for en_entry in grouped_en:
         ru_text: str = ""
-        ru_entry: SubtitleEntry | None = ru_map_by_index.get(en_entry.index)
-
-        if ru_entry is not None:
-            ru_text = ru_entry.text
-        elif ru_entries:
-            for entry in ru_entries:
-                overlap_start: float = max(en_entry.start_seconds, entry.start_seconds)
-                overlap_end: float = min(en_entry.end_seconds, entry.end_seconds)
-                if overlap_end > overlap_start:
-                    ru_text = entry.text
-                    break
+        if ru_entries:
+            matched_ru: list[str] = [
+                ru.text
+                for ru in ru_entries
+                if min(en_entry.end_seconds, ru.end_seconds)
+                > max(en_entry.start_seconds, ru.start_seconds)
+            ]
+            ru_text = " ".join(dict.fromkeys(matched_ru))
 
         result.append(
             {

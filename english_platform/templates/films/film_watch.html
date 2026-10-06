@@ -5,7 +5,7 @@
 {% block page_title %}🎬 {{ film.title }}{% endblock %}
 
 {% block extra_css %}
-<link rel="stylesheet" href="{% static 'css/films.css' %}?v=5">
+<link rel="stylesheet" href="{% static 'css/films.css' %}?v=6">
 {% endblock %}
 
 {% block content %}
@@ -100,7 +100,7 @@
     let currentSubIdx = -1;
     let popupEl = null;
     let ruVisible = false;
-    const subOffset = 1.6;
+    const subOffset = 0.0;
     let syncAnimFrame = null;
 
     localStorage.removeItem("sub_offset");
@@ -164,6 +164,15 @@
     function checkSubtitles() {
         const currentTime = video.currentTime + subOffset;
         let matchedIdx = -1;
+
+        if (
+            currentSubIdx >= 0 &&
+            currentSubIdx < subtitles.length &&
+            currentTime >= subtitles[currentSubIdx].start &&
+            currentTime <= subtitles[currentSubIdx].end
+        ) {
+            return;
+        }
 
         for (let i = 0; i < subtitles.length; i++) {
             if (currentTime >= subtitles[i].start && currentTime <= subtitles[i].end) {
