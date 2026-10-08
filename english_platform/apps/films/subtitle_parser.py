@@ -12,75 +12,140 @@ class SubtitleEntry:
     text: str
 
 
+class SentenceSplitter:
+    def __init__(self) -> None:
+        self._pattern: re.Pattern[str] = re.compile(r"(?<=[.!?])\s+(?=[A-Z0-9\"'“])")
+
+    def split(self, entries: list[SubtitleEntry]) -> list[SubtitleEntry]:
+        if not entries:
+            return []
+
+        result: list[SubtitleEntry] = []
+        auto_index: int = 1
+
+        for entry in entries:
+            parts: list[str] = [
+                p.strip() for p in self._pattern.split(entry.text) if p.strip()
+            ]
+
+            if len(parts) <= 1:
+                result.append(
+                    SubtitleEntry(
+                        index=auto_index,
+                        start_seconds=entry.start_seconds,
+                        end_seconds=entry.end_seconds,
+                        text=entry.text,
+                    )
+                )
+                auto_index += 1
+                continue
+
+            total_chars: int = sum(len(part) for part in parts)
+            duration: float = max(0.0, entry.end_seconds - entry.start_seconds)
+            current_start: float = entry.start_seconds
+
+            for i, part in enumerate(parts):
+                if i == len(parts) - 1:
+                    current_end = entry.end_seconds
+                else:
+                    fraction: float = (
+                        len(part) / total_chars if total_chars > 0 else 0.0
+                    )
+                    current_end = round(current_start + duration * fraction, 2)
+
+                result.append(
+                    SubtitleEntry(
+                        index=auto_index,
+                        start_seconds=current_start,
+                        end_seconds=current_end,
+                        text=part,
+                    )
+                )
+                auto_index += 1
+                current_start = current_end
+
+        return result
+
+
 class SubtitleGrouper:
     def __init__(
         self,
         target_words: int = 12,
-        max_words: int = 20,
-        max_duration: float = 7.0,
+        max_words: int = 24,
+        hard_max_words: int = 32,
+        max_duration: float = 9.0,
         pause_threshold: float = 3.5,
-        min_sentence_words: int = 8,
     ) -> None:
         self._target_words: int = target_words
         self._max_words: int = max_words
+        self._hard_max_words: int = hard_max_words
         self._max_duration: float = max_duration
         self._pause_threshold: float = pause_threshold
-        self._min_sentence_words: int = min_sentence_words
+        self._splitter: SentenceSplitter = SentenceSplitter()
 
     def group(self, entries: list[SubtitleEntry]) -> list[SubtitleEntry]:
         if not entries:
             return []
 
+        normalized: list[SubtitleEntry] = self._splitter.split(entries)
+        has_punctuation: bool = any(
+            e.text.rstrip().endswith((".", "?", "!")) for e in normalized
+        )
         merged: list[SubtitleEntry] = []
         i: int = 0
-        total_entries: int = len(entries)
+        total: int = len(normalized)
         auto_index: int = 1
 
-        while i < total_entries:
-            group: list[SubtitleEntry] = [entries[i]]
-            word_count: int = len(entries[i].text.split())
-            start_seconds: float = entries[i].start_seconds
+        while i < total:
+            group: list[SubtitleEntry] = [normalized[i]]
+            word_count: int = len(normalized[i].text.split())
+            start_seconds: float = normalized[i].start_seconds
             j: int = i + 1
 
-            while j < total_entries:
-                next_entry: SubtitleEntry = entries[j]
+            while j < total:
+                next_entry: SubtitleEntry = normalized[j]
                 next_words: int = len(next_entry.text.split())
-                gap: float = next_entry.start_seconds - entries[j - 1].start_seconds
+                gap: float = next_entry.start_seconds - normalized[j - 1].start_seconds
 
                 if gap > self._pause_threshold:
                     break
 
                 duration: float = next_entry.start_seconds - start_seconds
-                if duration > self._max_duration:
-                    break
-
-                prev_has_terminal_punct: bool = (
+                current_ends_sentence: bool = (
                     group[-1].text.rstrip().endswith((".", "?", "!"))
                 )
-                if prev_has_terminal_punct and word_count >= self._min_sentence_words:
-                    break
 
-                if word_count + next_words > self._max_words:
-                    break
+                if has_punctuation:
+                    if current_ends_sentence and word_count >= self._target_words:
+                        break
+
+                    if current_ends_sentence and (
+                        word_count + next_words > self._max_words
+                    ):
+                        break
+
+                    if not current_ends_sentence and word_count >= self._hard_max_words:
+                        break
+
+                    if duration > self._max_duration and current_ends_sentence:
+                        break
+                else:
+                    if word_count + next_words > self._max_words:
+                        break
+
+                    if duration > self._max_duration:
+                        break
 
                 group.append(next_entry)
                 word_count += next_words
-
-                current_has_terminal_punct: bool = next_entry.text.rstrip().endswith(
-                    (".", "?", "!")
-                )
-                if word_count >= self._target_words and current_has_terminal_punct:
-                    j += 1
-                    break
-
                 j += 1
 
             group_text: str = " ".join(e.text for e in group)
             group_start: float = group[0].start_seconds
             last_entry: SubtitleEntry = group[-1]
 
-            if j < total_entries:
-                next_start: float = entries[j].start_seconds
+            if j < total:
+                next_start: float = normalized[j].start_seconds
                 if next_start > last_entry.end_seconds:
                     group_end: float = last_entry.end_seconds
                 else:

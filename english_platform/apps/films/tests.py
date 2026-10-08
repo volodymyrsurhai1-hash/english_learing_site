@@ -3,6 +3,7 @@ from tempfile import NamedTemporaryFile
 from django.test import SimpleTestCase
 
 from apps.films.subtitle_parser import (
+    SentenceSplitter,
     SubtitleEntry,
     SubtitleGrouper,
     clean_subtitle_text,
@@ -53,6 +54,37 @@ class SubtitleParserTests(SimpleTestCase):
             self.assertEqual(entries[1].text, "Second line")
         finally:
             tmp_path.unlink(missing_ok=True)
+
+
+class SentenceSplitterTests(SimpleTestCase):
+    def test_split_empty(self) -> None:
+        splitter = SentenceSplitter()
+        self.assertEqual(splitter.split([]), [])
+
+    def test_split_no_boundary(self) -> None:
+        splitter = SentenceSplitter()
+        entry = SubtitleEntry(
+            index=1, start_seconds=1.0, end_seconds=3.0, text="No boundary here"
+        )
+        result: list[SubtitleEntry] = splitter.split([entry])
+        self.assertEqual(len(result), 1)
+        self.assertEqual(result[0].text, "No boundary here")
+
+    def test_split_mid_cue(self) -> None:
+        splitter = SentenceSplitter()
+        entry = SubtitleEntry(
+            index=1,
+            start_seconds=0.0,
+            end_seconds=4.0,
+            text="First sentence. Second sentence here",
+        )
+        parts: list[SubtitleEntry] = splitter.split([entry])
+        self.assertEqual(len(parts), 2)
+        self.assertEqual(parts[0].text, "First sentence.")
+        self.assertEqual(parts[1].text, "Second sentence here")
+        self.assertEqual(parts[0].start_seconds, 0.0)
+        self.assertGreater(parts[1].start_seconds, 0.0)
+        self.assertEqual(parts[1].end_seconds, 4.0)
 
 
 class SubtitleGrouperTests(SimpleTestCase):
@@ -136,6 +168,58 @@ class SubtitleGrouperTests(SimpleTestCase):
         self.assertEqual(len(grouped), 2)
         self.assertEqual(grouped[0].text, "One two three four")
         self.assertEqual(grouped[1].text, "five six seven eight")
+
+    def test_group_preserves_sentence_integrity_with_mid_cue_split(self) -> None:
+        grouper = SubtitleGrouper(target_words=4, max_words=8)
+        entries: list[SubtitleEntry] = [
+            SubtitleEntry(
+                index=1,
+                start_seconds=0.0,
+                end_seconds=3.0,
+                text="This is first sentence. Now here starts",
+            ),
+            SubtitleEntry(
+                index=2,
+                start_seconds=3.0,
+                end_seconds=6.0,
+                text="the second sentence properly.",
+            ),
+        ]
+        grouped: list[SubtitleEntry] = grouper.group(entries)
+        self.assertEqual(len(grouped), 2)
+        self.assertEqual(grouped[0].text, "This is first sentence.")
+        self.assertEqual(
+            grouped[1].text, "Now here starts the second sentence properly."
+        )
+
+    def test_group_does_not_break_sentence_midway(self) -> None:
+        grouper = SubtitleGrouper(target_words=6, max_words=10, hard_max_words=20)
+        entries: list[SubtitleEntry] = [
+            SubtitleEntry(
+                index=1,
+                start_seconds=0.0,
+                end_seconds=2.0,
+                text="One two three four",
+            ),
+            SubtitleEntry(
+                index=2,
+                start_seconds=2.0,
+                end_seconds=4.0,
+                text="five six seven eight",
+            ),
+            SubtitleEntry(
+                index=3,
+                start_seconds=4.0,
+                end_seconds=6.0,
+                text="nine ten finished.",
+            ),
+        ]
+        grouped: list[SubtitleEntry] = grouper.group(entries)
+        self.assertEqual(len(grouped), 1)
+        self.assertEqual(
+            grouped[0].text,
+            "One two three four five six seven eight nine ten finished.",
+        )
 
     def test_load_bilingual_subtitles(self) -> None:
         en_content: str = (
