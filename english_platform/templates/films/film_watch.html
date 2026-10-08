@@ -100,10 +100,8 @@
     let currentSubIdx = -1;
     let popupEl = null;
     let ruVisible = false;
-    const subOffset = 0.0;
+    let subOffset = 1.0;
     let syncAnimFrame = null;
-
-    localStorage.removeItem("sub_offset");
 
     if (skipBackBtn) {
         skipBackBtn.addEventListener("click", function () {
@@ -145,6 +143,12 @@
             } else {
                 video.pause();
             }
+        } else if (e.key === "[") {
+            subOffset = Math.max(-5.0, Math.round((subOffset - 0.2) * 10) / 10);
+            checkSubtitles();
+        } else if (e.key === "]") {
+            subOffset = Math.min(5.0, Math.round((subOffset + 0.2) * 10) / 10);
+            checkSubtitles();
         }
     });
 

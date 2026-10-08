@@ -22,8 +22,9 @@ class SentenceSplitter:
 
         result: list[SubtitleEntry] = []
         auto_index: int = 1
+        total_entries: int = len(entries)
 
-        for entry in entries:
+        for idx, entry in enumerate(entries):
             parts: list[str] = [
                 p.strip() for p in self._pattern.split(entry.text) if p.strip()
             ]
@@ -41,7 +42,17 @@ class SentenceSplitter:
                 continue
 
             total_chars: int = sum(len(part) for part in parts)
-            duration: float = max(0.0, entry.end_seconds - entry.start_seconds)
+            if idx + 1 < total_entries:
+                next_entry: SubtitleEntry = entries[idx + 1]
+                effective_end: float = min(
+                    entry.end_seconds, next_entry.start_seconds + 0.5
+                )
+                if effective_end <= entry.start_seconds:
+                    effective_end = entry.end_seconds
+            else:
+                effective_end = entry.end_seconds
+
+            duration: float = max(0.0, effective_end - entry.start_seconds)
             current_start: float = entry.start_seconds
 
             for i, part in enumerate(parts):
