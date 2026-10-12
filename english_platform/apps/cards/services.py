@@ -7,7 +7,9 @@ class DeckService:
     @staticmethod
     def get_or_create_deck(session, user) -> list[int]:
         if not session.get("card_deck", 0):
-            words = UserWord.objects.filter(user=user, status="LEARNING").values_list("pk", flat=True)
+            words = UserWord.objects.filter(user=user, status="LEARNING").values_list(
+                "pk", flat=True
+            )
             list_words = list(words)
             random.shuffle(list_words)
             session["card_deck"] = list_words

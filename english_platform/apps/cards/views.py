@@ -12,13 +12,14 @@ from apps.dictionary.presenters import CuratedDictionaryEntry, DictionaryPresent
 from config.settings import DAILY_WORD_GOAL
 
 
-
 class FlashcardRedirectView(LoginRequiredMixin, View):
     def get(self, request: HttpRequest) -> HttpResponse:
         deck = DeckService.get_or_create_deck(request.session, request.user)
         today = timezone.now().date()
-        learned_today = UserWord.objects.filter(user=request.user, status="LEARNED", learned_at__date=today).count()
-        if not deck or learned_today>=DAILY_WORD_GOAL:
+        learned_today = UserWord.objects.filter(
+            user=request.user, status="LEARNED", learned_at__date=today
+        ).count()
+        if not deck or learned_today >= DAILY_WORD_GOAL:
             return render(request, "cards/done.html")
 
         return redirect("cards:card", pk=deck[0])
@@ -40,7 +41,9 @@ class FlashcardView(LoginRequiredMixin, View):
         total_all: int = all_qs.count()
         today = timezone.now().date()
         count_learned: int = all_qs.filter(status="LEARNED").count()
-        count_learned_today: int = all_qs.filter(status="LEARNED", learned_at__date=today).count()
+        count_learned_today: int = all_qs.filter(
+            status="LEARNED", learned_at__date=today
+        ).count()
 
         entry: CuratedDictionaryEntry = DictionaryPresenter.present(
             current.word.full_translation, current.word.word
@@ -68,8 +71,10 @@ class MarkLearnedView(LoginRequiredMixin, View):
         DeckService.remove_pk(request.session, pk)
 
         today = timezone.now().date()
-        learned_today = UserWord.objects.filter(user=request.user, status="LEARNED", learned_at__date=today).count()
-        if learned_today>=DAILY_WORD_GOAL:
+        learned_today = UserWord.objects.filter(
+            user=request.user, status="LEARNED", learned_at__date=today
+        ).count()
+        if learned_today >= DAILY_WORD_GOAL:
             return redirect("cards:index")
 
         next_pk_str: str = request.POST.get("next_pk", "")
