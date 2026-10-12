@@ -14,6 +14,8 @@ from django.http import HttpRequest, HttpResponse, JsonResponse
 from django.shortcuts import redirect
 from django.views.generic import DetailView, ListView, View
 
+from apps.cards.services import DeckService
+
 logger = logging.getLogger(__name__)
 
 
@@ -356,7 +358,8 @@ class SaveWordFromFilmView(View):
                 )
 
             get_or_generate_word(word_str)
-            save_word_for_user(word_str, request.user)
+            user_word, _ = save_word_for_user(word_str, request.user)
+            DeckService.add_pk(request.session, user_word.pk)
 
             return JsonResponse({"status": "saved", "word": word_str})
         except Exception as exc:

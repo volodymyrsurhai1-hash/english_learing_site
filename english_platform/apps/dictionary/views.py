@@ -6,6 +6,7 @@ from django.shortcuts import redirect
 from django.views import View
 from django.views.generic import TemplateView
 
+from apps.cards.services import DeckService
 from apps.dictionary.models import Word
 from apps.dictionary.presenters import CuratedDictionaryEntry, DictionaryPresenter
 from apps.dictionary.services import (
@@ -68,7 +69,8 @@ class SaveWordView(LoginRequiredMixin, View):
         word_text: str = request.POST.get("word", "").strip()
         if word_text:
             try:
-                save_word_for_user(word_text, request.user)
+                user_word, _ = save_word_for_user(word_text, request.user)
+                DeckService.add_pk(request.session, user_word.pk)
             except Word.DoesNotExist:
                 pass
         return redirect(f"/?q={word_text}")

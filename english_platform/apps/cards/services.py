@@ -39,3 +39,10 @@ class DeckService:
         if pk in deck:
             deck.remove(pk)
             session.modified = True
+
+    @staticmethod
+    def add_pk(session, pk: int) -> None:
+        deck = session.get("card_deck")
+        if deck is not None and pk not in deck:
+            deck.insert(0, pk)
+            session.modified = True
