@@ -49,6 +49,8 @@ class FlashcardViewTests(SimpleTestCase):
         request = self.factory.get("/cards/10/")
         request.user = mock_user
 
+        request.session = {"card_deck": [10]}
+
         view.get(request, pk=10)
 
         mock_render.assert_called_once()

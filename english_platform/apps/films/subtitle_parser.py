@@ -14,7 +14,9 @@ class SubtitleEntry:
 
 class SentenceSplitter:
     def __init__(self) -> None:
-        self._pattern: re.Pattern[str] = re.compile(r"(?<=[.!?])\s+(?=[A-Z0-9\"'“])")
+        self._pattern: re.Pattern[str] = re.compile(
+            r"(?<=[.!?])\s+(?=[A-ZА-ЯЁ0-9\"'«“])"
+        )
 
     def split(self, entries: list[SubtitleEntry]) -> list[SubtitleEntry]:
         if not entries:
@@ -267,19 +269,35 @@ def load_bilingual_subtitles(
     active_grouper: SubtitleGrouper = grouper or SubtitleGrouper()
     grouped_en: list[SubtitleEntry] = active_grouper.group(en_entries)
 
+    splitter: SentenceSplitter = SentenceSplitter()
+    normalized_ru: list[SubtitleEntry] = (
+        splitter.split(ru_entries) if ru_entries else []
+    )
+
+    en_to_ru: dict[int, list[str]] = {idx: [] for idx in range(len(grouped_en))}
+
+    if normalized_ru and grouped_en:
+        for ru_entry in normalized_ru:
+            best_idx: int = -1
+            best_overlap: float = 0.0
+
+            for idx, en_entry in enumerate(grouped_en):
+                overlap: float = max(
+                    0.0,
+                    min(en_entry.end_seconds, ru_entry.end_seconds)
+                    - max(en_entry.start_seconds, ru_entry.start_seconds),
+                )
+                if overlap > best_overlap:
+                    best_overlap = overlap
+                    best_idx = idx
+
+            if best_idx >= 0 and best_overlap > 0.0:
+                en_to_ru[best_idx].append(ru_entry.text)
+
     result: list[dict[str, str | float]] = []
 
-    for en_entry in grouped_en:
-        ru_text: str = ""
-        if ru_entries:
-            matched_ru: list[str] = [
-                ru.text
-                for ru in ru_entries
-                if min(en_entry.end_seconds, ru.end_seconds)
-                > max(en_entry.start_seconds, ru.start_seconds)
-            ]
-            ru_text = " ".join(dict.fromkeys(matched_ru))
-
+    for idx, en_entry in enumerate(grouped_en):
+        ru_text: str = " ".join(dict.fromkeys(en_to_ru[idx]))
         result.append(
             {
                 "start": en_entry.start_seconds,

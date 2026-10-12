@@ -8,11 +8,14 @@
 
     <div class="flashcard-progress">
         <div class="flashcard-progress__bar">
-            {% if total_all %}
-            <div class="flashcard-progress__fill" style="width: {% widthratio count_learned total_all 100 %}%"></div>
+            {% if daily_goal %}
+            <div class="flashcard-progress__fill" style="width: {% widthratio count_learned_today daily_goal 100 %}%"></div>
             {% endif %}
         </div>
-        <span class="flashcard-progress__label">{{ count_learned }} / {{ total_all }} выучено</span>
+        <span class="flashcard-progress__label">
+            ⚡ {{ count_learned_today }} / {{ daily_goal }} сегодня
+            <span class="badge badge--subtle" style="margin-left: 8px; font-weight: 500;">{{ count_learned }} / {{ total_all }} всего</span>
+        </span>
     </div>
 
     <div class="flashcard flashcard--large" id="flashcard">

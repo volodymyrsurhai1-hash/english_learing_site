@@ -250,3 +250,34 @@ class SubtitleGrouperTests(SimpleTestCase):
         finally:
             en_path.unlink(missing_ok=True)
             ru_path.unlink(missing_ok=True)
+
+    def test_load_bilingual_subtitles_prevents_bleeding(self) -> None:
+        en_content: str = (
+            "1\n00:00:00,000 --> 00:00:05,000\nFirst sentence here.\n\n"
+            "2\n00:00:05,000 --> 00:00:10,000\nSecond sentence begins.\n"
+        )
+        ru_content: str = (
+            "1\n00:00:00,000 --> 00:00:05,050\nПервое предложение.\n\n"
+            "2\n00:00:05,050 --> 00:00:10,000\nВторое предложение.\n"
+        )
+        with NamedTemporaryFile(
+            mode="w", suffix=".en.srt", delete=False, encoding="utf-8"
+        ) as en_f:
+            en_f.write(en_content)
+            en_path = Path(en_f.name)
+
+        with NamedTemporaryFile(
+            mode="w", suffix=".ru.srt", delete=False, encoding="utf-8"
+        ) as ru_f:
+            ru_f.write(ru_content)
+            ru_path = Path(ru_f.name)
+
+        try:
+            grouper = SubtitleGrouper(target_words=2, max_words=4)
+            result = load_bilingual_subtitles(en_path, ru_path, grouper=grouper)
+            self.assertEqual(len(result), 2)
+            self.assertEqual(result[0]["ru"], "Первое предложение.")
+            self.assertEqual(result[1]["ru"], "Второе предложение.")
+        finally:
+            en_path.unlink(missing_ok=True)
+            ru_path.unlink(missing_ok=True)

@@ -25,6 +25,7 @@ class UserWord(models.Model):
     )
 
     added_at = models.DateTimeField(auto_now_add=True)
+    learned_at = models.DateTimeField(null=True, blank=True)
 
     class Meta:
         unique_together = ("user", "word")

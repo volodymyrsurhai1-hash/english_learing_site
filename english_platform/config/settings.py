@@ -22,6 +22,8 @@ GEMINI_MODEL: str = os.environ.get("GEMINI_MODEL", "gemini-3.6-flash")
 
 DEBUG: bool = os.environ.get("DEBUG", "False").lower() in ("true", "1", "yes")
 
+DAILY_WORD_GOAL = 10
+
 ALLOWED_HOSTS: list[str] = [
     host.strip()
     for host in os.environ.get(
