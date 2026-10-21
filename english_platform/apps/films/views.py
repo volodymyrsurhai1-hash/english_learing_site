@@ -359,7 +359,7 @@ class SaveWordFromFilmView(View):
 
             get_or_generate_word(word_str)
             user_word, _ = save_word_for_user(word_str, request.user)
-            DeckService.add_pk(request.session, user_word.pk)
+            DeckService.add_pk(request.user, user_word.pk)
 
             return JsonResponse({"status": "saved", "word": word_str})
         except Exception as exc:

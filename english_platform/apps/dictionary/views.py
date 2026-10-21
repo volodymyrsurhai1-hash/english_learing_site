@@ -70,7 +70,7 @@ class SaveWordView(LoginRequiredMixin, View):
         if word_text:
             try:
                 user_word, _ = save_word_for_user(word_text, request.user)
-                DeckService.add_pk(request.session, user_word.pk)
+                DeckService.add_pk(request.user, user_word.pk)
             except Word.DoesNotExist:
                 pass
         return redirect(f"/?q={word_text}")
