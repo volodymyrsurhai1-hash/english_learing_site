@@ -35,7 +35,6 @@ class FlashcardView(LoginRequiredMixin, View):
         current: UserWord = get_object_or_404(UserWord, pk=pk, user=request.user)
 
         next_pk: Optional[int] = DeckService.get_next_pk(request.session, current.pk)
-        print(next_pk)
 
         all_qs = UserWord.objects.filter(user=request.user)
         total_all: int = all_qs.count()

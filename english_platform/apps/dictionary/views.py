@@ -22,7 +22,7 @@ from apps.dictionary.services import (
 
 
 class SearchView(TemplateView):
-    template_name: str = "dictionary/search.html"
+    template_name: Optional[str] = "dictionary/search.html"
 
     def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
         context: dict[str, Any] = super().get_context_data(**kwargs)

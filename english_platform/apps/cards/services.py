@@ -1,25 +1,35 @@
 import random
 
 from apps.dictionary.models import UserWord
+from django.core.cache import cache
+from typing import Optional
 
 
 class DeckService:
+    DECK_TIMEOUT = 60 * 60 * 24  # 1 day in seconds
+
     @staticmethod
-    def get_or_create_deck(session, user) -> list[int]:
-        if not session.get("card_deck", 0):
+    def _get_cache_key(user) -> str:
+        return f"deck:user:{user.pk}"
+
+    @staticmethod
+    def get_or_create_deck(cls, user) -> list[int]:
+        cache_key = cls._get_cache_key(user)
+        deck = cache.get(cache_key)
+        if not deck:
             words = UserWord.objects.filter(user=user, status="LEARNING").values_list(
                 "pk", flat=True
             )
-            list_words = list(words)
-            random.shuffle(list_words)
-            session["card_deck"] = list_words
-            session.modified = True
-            return session["card_deck"]
-        return session.get("card_deck", [])
+            deck = list(words)
+            random.shuffle(deck)
+            cache.set(cache_key, deck)
+        return deck
 
-    @staticmethod
-    def get_next_pk(session, current_pk: int):
-        deck: list[int] = session.get("card_deck", [])
+    @classmethod
+    def get_next_pk(cls, user, current_pk: int) -> Optional[int]:
+        cache_key = cls._get_cache_key(user)
+        deck = cache.get(cache_key) or []
+
         if not deck:
             return None
 
@@ -28,21 +38,24 @@ class DeckService:
             if current_index + 1 < len(deck):
                 return deck[current_index + 1]
         except ValueError:
-            return deck[0]
+            pass
 
-        return None
+        return deck[0]
 
-    @staticmethod
-    def remove_pk(session, pk: int):
-        deck = session.get("card_deck", [])
+    @classmethod
+    def remove_pk(cls, user, pk: int) -> None:
+        cache_key = cls._get_cache_key(user)
+        deck = cache.get(cache_key)
 
-        if pk in deck:
+        if deck and pk in deck:
             deck.remove(pk)
-            session.modified = True
+            cache.set(cache_key, deck, timeout=cls.DECK_TIMEOUT)
 
-    @staticmethod
-    def add_pk(session, pk: int) -> None:
-        deck = session.get("card_deck")
+    @classmethod
+    def add_pk(cls, user, pk: int) -> None:
+        cache_key = cls._get_cache_key(user)
+        deck = cache.get(cache_key)
+
         if deck is not None and pk not in deck:
             deck.insert(0, pk)
-            session.modified = True
+            cache.set(cache_key, deck, timeout=cls.DECK_TIMEOUT)
