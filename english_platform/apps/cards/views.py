@@ -1,25 +1,26 @@
+from datetime import date
 from typing import Any, Optional
-from .services import DeckService
 
+from django.conf import settings
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
-from django.views import View
 from django.utils import timezone
+from django.views import View
 
+from apps.cards.services import DeckService
 from apps.dictionary.models import UserWord
 from apps.dictionary.presenters import CuratedDictionaryEntry, DictionaryPresenter
-from config.settings import DAILY_WORD_GOAL
 
 
 class FlashcardRedirectView(LoginRequiredMixin, View):
     def get(self, request: HttpRequest) -> HttpResponse:
-        deck = DeckService.get_or_create_deck(request.session, request.user)
-        today = timezone.now().date()
-        learned_today = UserWord.objects.filter(
+        deck = DeckService.get_or_create_deck(request.user)
+        today: date = timezone.now().date()
+        learned_today: int = UserWord.objects.filter(
             user=request.user, status="LEARNED", learned_at__date=today
         ).count()
-        if not deck or learned_today >= DAILY_WORD_GOAL:
+        if not deck or learned_today >= settings.DAILY_WORD_GOAL:
             return render(request, "cards/done.html")
 
         return redirect("cards:card", pk=deck[0])
@@ -27,18 +28,17 @@ class FlashcardRedirectView(LoginRequiredMixin, View):
 
 class FlashcardView(LoginRequiredMixin, View):
     def get(self, request: HttpRequest, pk: int) -> HttpResponse:
-
-        deck = DeckService.get_or_create_deck(request.session, request.user)
+        deck = DeckService.get_or_create_deck(request.user)
         if not deck:
             return render(request, "cards/done.html")
 
         current: UserWord = get_object_or_404(UserWord, pk=pk, user=request.user)
 
-        next_pk: Optional[int] = DeckService.get_next_pk(request.session, current.pk)
+        next_pk: Optional[int] = DeckService.get_next_pk(request.user, current.pk)
 
         all_qs = UserWord.objects.filter(user=request.user)
         total_all: int = all_qs.count()
-        today = timezone.now().date()
+        today: date = timezone.now().date()
         count_learned: int = all_qs.filter(status="LEARNED").count()
         count_learned_today: int = all_qs.filter(
             status="LEARNED", learned_at__date=today
@@ -54,9 +54,9 @@ class FlashcardView(LoginRequiredMixin, View):
             "next_pk": next_pk,
             "count_learned": count_learned,
             "total_all": total_all,
-            "remaining": len(request.session.get("card_deck", [])),
+            "remaining": len(deck),
             "count_learned_today": count_learned_today,
-            "daily_goal": DAILY_WORD_GOAL,
+            "daily_goal": settings.DAILY_WORD_GOAL,
         }
         return render(request, "cards/card.html", context)
 
@@ -67,13 +67,13 @@ class MarkLearnedView(LoginRequiredMixin, View):
         user_word.status = "LEARNED"
         user_word.learned_at = timezone.now()
         user_word.save(update_fields=["status", "learned_at"])
-        DeckService.remove_pk(request.session, pk)
+        DeckService.remove_pk(request.user, pk)
 
-        today = timezone.now().date()
-        learned_today = UserWord.objects.filter(
+        today: date = timezone.now().date()
+        learned_today: int = UserWord.objects.filter(
             user=request.user, status="LEARNED", learned_at__date=today
         ).count()
-        if learned_today >= DAILY_WORD_GOAL:
+        if learned_today >= settings.DAILY_WORD_GOAL:
             return redirect("cards:index")
 
         next_pk_str: str = request.POST.get("next_pk", "")
