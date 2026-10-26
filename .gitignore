@@ -7,7 +7,7 @@ wheels/
 *.egg-info
 .env
 
-# Virtual environments
+# Virtual environ
 .venv
 .idea
 implementation_plan.md
