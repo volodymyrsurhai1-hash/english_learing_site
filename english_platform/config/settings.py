@@ -28,7 +28,11 @@ ALLOWED_HOSTS: list[str] = [
     host.strip()
     for host in os.environ.get(
         "ALLOWED_HOSTS",
-        "*" if DEBUG else "vsenglish.me,www.vsenglish.me,localhost,127.0.0.1,13.49.64.37",
+        (
+            "*"
+            if DEBUG
+            else "vsenglish.me,www.vsenglish.me,localhost,127.0.0.1,13.49.64.37"
+        ),
     ).split(",")
     if host.strip()
 ]
