@@ -18,7 +18,7 @@ def download_video(
         output_dir = Path(settings.MEDIA_ROOT) / "films"
 
     if languages is None:
-        languages = ["en", "ru"]
+        languages = ["en-orig", "en", "ru-orig", "ru"]
 
     subtitle_config = SubtitleConfig(languages=languages)
     download_config = DownloadConfig(

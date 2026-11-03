@@ -4,7 +4,9 @@ from pathlib import Path
 
 @dataclass(frozen=True)
 class SubtitleConfig:
-    languages: list[str] = field(default_factory=lambda: ["en", "ru"])
+    languages: list[str] = field(
+        default_factory=lambda: ["en-orig", "en", "ru-orig", "ru"]
+    )
     format: str = "srt"
     write_auto: bool = True
     embed: bool = False

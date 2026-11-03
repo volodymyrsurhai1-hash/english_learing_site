@@ -28,7 +28,7 @@ ALLOWED_HOSTS: list[str] = [
     host.strip()
     for host in os.environ.get(
         "ALLOWED_HOSTS",
-        "*" if DEBUG else "vsenglish.me,www.vsenglish.me,localhost,127.0.0.1",
+        "*" if DEBUG else "vsenglish.me,www.vsenglish.me,localhost,127.0.0.1,13.49.64.37",
     ).split(",")
     if host.strip()
 ]
@@ -37,7 +37,7 @@ CSRF_TRUSTED_ORIGINS: list[str] = [
     origin.strip()
     for origin in os.environ.get(
         "CSRF_TRUSTED_ORIGINS",
-        "https://vsenglish.me,https://www.vsenglish.me,http://localhost,http://127.0.0.1",
+        "https://vsenglish.me,https://www.vsenglish.me,http://localhost,http://127.0.0.1,13.49.64.37",
     ).split(",")
     if origin.strip()
 ]
